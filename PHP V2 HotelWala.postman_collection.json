@@ -1,0 +1,1043 @@
+{
+	"info": {
+		"_postman_id": "e5dc1465-8ad6-41fe-b6af-aac0a87f7ac3",
+		"name": "PHP V2 HotelWala",
+		"description": "API for User and Hotel management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11806054"
+	},
+	"item": [
+		{
+			"name": "User API",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Rakesh Mane\",\n    \"mobile\": \"9970224843\",\n    \"password\": \"password123\",\n    \"hotelId\": \"1\",\n    \"deviceToken\": \"device_token_123\",\n    \"active\": \"1\",\n    \"userType\": \"1\",\n    \"action\": \"login\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FinalAPI/Auth/auth.php",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"FinalAPI",
+								"Auth",
+								"auth.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/api/users/:id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe Updated\",\n    \"mobile\": \"9876543210\",\n    \"userType\": \"user\",\n    \"active\": \"0\",\n    \"password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost/api/users/:id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/api/users/:id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Hotel API",
+			"item": [
+				{
+					"name": "Register Hotel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJpYXQiOjE3MzQxODM5NDgsImV4cCI6MTczNDU0Mzk0OCwidXNlcklEIjo1MywidXNlclR5cGUiOjF9",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"insert\",\n    \"userID\": 53,\n    \"name\": \"Vartad Sunshine\",\n    \"mobile\": \"1234567890\",\n    \"address\": \"123 Beach Rd\",\n    \"pincode\": \"123456\",\n    \"active\": 1,\n     \"hotelID\": 50\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FinalAPI/Auth/hotel.php",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"FinalAPI",
+								"Auth",
+								"hotel.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotels By User ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/api/hotels/:userID",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"hotels",
+								":userID"
+							],
+							"variable": [
+								{
+									"key": "userID"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Hotel",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Hotel Sunshine Updated\",\n    \"mobile\": \"1234567890\",\n    \"address\": \"456 New Road, New York\",\n    \"pincode\": \"654321\",\n    \"active\": \"0\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost/api/hotels/:hotelID",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"hotels",
+								":hotelID"
+							],
+							"variable": [
+								{
+									"key": "hotelID"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Hotel",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/api/hotels/:hotelID",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"hotels",
+								":hotelID"
+							],
+							"variable": [
+								{
+									"key": "hotelID"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Finasl submit",
+			"item": [
+				{
+					"name": "Add",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTg4Mzc0NzEsImV4cCI6MTczMDM5NTA3MX0.RKSZkpH9Ia6pByeU10S3KdoLSRSj-gn1zlybhXAAYrk",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotelID\": 1,\r\n    \"userID\": 19,\r\n    \"total\": 122,\r\n    \"orderList\": \"zeyxcuiujn[kibybinjlk\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/order/add",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"order",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTMyOTk2NDQsImV4cCI6MTcyNDg1NzI0NH0.u1RnoK-P2fnyCCXBkJd6uZ2NVHb6EDFoil3et4ENwyw",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"nkessssw\", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234, \"stock\":0, \"active\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/order/delete/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"order",
+								"delete",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTMyOTk2NDQsImV4cCI6MTcyNDg1NzI0NH0.u1RnoK-P2fnyCCXBkJd6uZ2NVHb6EDFoil3et4ENwyw",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"nkessssw\", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234, \"stock\":0, \"active\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/order/get/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"order",
+								"get",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTg4Mzc0NzEsImV4cCI6MTczMDM5NTA3MX0.RKSZkpH9Ia6pByeU10S3KdoLSRSj-gn1zlybhXAAYrk",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n   {\r\n   \r\n    \"orderID\": 1,\r\n    \"total\": 60000,\r\n    \"orderList\": \"dsdgfdhgjhkjjkjjghdfadFGDHJGKHLJGFDSFASFDSGDFHJKHfnfnfnfn[kibybinjlk\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/order/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"order",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "by iD",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Table Category",
+			"item": [
+				{
+					"name": "get Tables",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTMyOTk2NDQsImV4cCI6MTcyNDg1NzI0NH0.u1RnoK-P2fnyCCXBkJd6uZ2NVHb6EDFoil3et4ENwyw",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"nkessssw\", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234, \"stock\":0, \"active\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/table/get/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"table",
+								"get",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Table add or Update",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"tableNumber\":5,\r\n    \"action\":\"insert\",\r\n      \"name\":\"Graund\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableCategory/tablecategory.php",
+							"host": [
+								"{{url}}TableCategory"
+							],
+							"path": [
+								"tablecategory.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tbale",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"tableNumber\":5,\r\n    \"action\":\"get\",\r\n      \"name\":\"Graund\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableCategory/tablecategory.php",
+							"host": [
+								"{{url}}TableCategory"
+							],
+							"path": [
+								"tablecategory.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"categoryID\":54,\r\n    \"action\":\"delete\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableCategory/tablecategory.php",
+							"host": [
+								"{{url}}TableCategory"
+							],
+							"path": [
+								"tablecategory.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order Menu",
+			"item": [
+				{
+					"name": "get Tables",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTMyOTk2NDQsImV4cCI6MTcyNDg1NzI0NH0.u1RnoK-P2fnyCCXBkJd6uZ2NVHb6EDFoil3et4ENwyw",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"nkessssw\", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234, \"stock\":0, \"active\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/table/get/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"table",
+								"get",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Table add or Update",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"tableNumber\":8,\r\n    \"isSplitTable\": 0,\r\n    \"tableSplitList\": \"bdfbdbdb\",\r\n    \"menuCards\": \"[{jdkbfnokdjfnbojkidnbdbf]\",\r\n     \"categoryID\" :55,\r\n     \"categoryName\":\"Graund\",\r\n    \"total\": 528,\r\n    \"isActiveTable\": 1,\r\n    \"action\":\"insert\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableOrder/tableorder.php",
+							"host": [
+								"{{url}}TableOrder"
+							],
+							"path": [
+								"tableorder.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tbale",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"tableNumber\":5,\r\n    \"action\":\"get\",\r\n      \"name\":\"Graund\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableCategory/tablecategory.php",
+							"host": [
+								"{{url}}TableCategory"
+							],
+							"path": [
+								"tablecategory.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 53,\r\n    \"hotelID\": 40,\r\n    \"categoryID\":54,\r\n    \"action\":\"delete\"\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}TableCategory/tablecategory.php",
+							"host": [
+								"{{url}}TableCategory"
+							],
+							"path": [
+								"tablecategory.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Menu Copy",
+			"item": [
+				{
+					"name": "Add Menu",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"पनीर भाजी \", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234,\r\n      \"stock\":0, \r\n      \"active\":1,\r\n      \"hotelID\":40,\r\n      \"userID\":53,\r\n      \"action\":\"get\"\r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Menucard/menucard.php",
+							"host": [
+								"{{url}}Menucard"
+							],
+							"path": [
+								"menucard.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"action\":\"delete\",\r\n      \"menuID\":35\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Menucard/menucard.php",
+							"host": [
+								"{{url}}Menucard"
+							],
+							"path": [
+								"menucard.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \r\n      \"hotelID\":40,\r\n      \"userID\":53,\r\n      \"action\":\"get\"\r\n      \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Menucard/menucard.php",
+							"host": [
+								"{{url}}Menucard"
+							],
+							"path": [
+								"menucard.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Menu",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"Panir masala \", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234,\r\n      \"stock\":0, \r\n      \"active\":1,\r\n      \"hotelID\":40,\r\n      \"userID\":53,\r\n      \"action\":\"get\"\r\n     \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Menucard/menucard.php",
+							"host": [
+								"{{url}}Menucard"
+							],
+							"path": [
+								"menucard.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ExpenceType Copy",
+			"item": [
+				{
+					"name": "Add",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotelID\": 1,\r\n    \"userID\": 19,\r\n    \"expName\": \"new exp s\",\r\n    \"action\":\"update\",\r\n    \"expTypeID\":6\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}ExpenceType/expencetype.php",
+							"host": [
+								"{{url}}ExpenceType"
+							],
+							"path": [
+								"expencetype.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotelID\": 1,\r\n    \"userID\": 19,\r\n    \"expName\": \"new exp s\",\r\n    \"action\":\"get\",\r\n    \"expTypeID\":6\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}ExpenceType/expencetype.php",
+							"host": [
+								"{{url}}ExpenceType"
+							],
+							"path": [
+								"expencetype.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJUeXBlIjoxLCJpYXQiOjE2OTMyOTk2NDQsImV4cCI6MTcyNDg1NzI0NH0.u1RnoK-P2fnyCCXBkJd6uZ2NVHb6EDFoil3et4ENwyw",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"menuName\":\"nkessssw\", \r\n     \"menuType\":\"veg\", \r\n     \"menuPrice\":234, \"stock\":0, \"active\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/expenceType/delete/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"expenceType",
+								"delete",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Expence Copy",
+			"item": [
+				{
+					"name": "Add Update Expence",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotelID\": 1,\r\n    \"userID\": 19,\r\n   \"expTypeID\":3, \r\n   \"amount\":333,\r\n   \"note\":\"texyrviinjok\",\r\n   \"action\":\"update\",\r\n   \"expID\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Expence/expence.php",
+							"host": [
+								"{{url}}Expence"
+							],
+							"path": [
+								"expence.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Expence",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotelID\": 1,\r\n    \"userID\": 19,\r\n   \"expTypeID\":3, \r\n   \"amount\":333,\r\n   \"note\":\"texyrviinjok\",\r\n   \"action\":\"get\",\r\n   \"expID\":1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}Expence/expence.php",
+							"host": [
+								"{{url}}Expence"
+							],
+							"path": [
+								"expence.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

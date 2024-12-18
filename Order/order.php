@@ -84,8 +84,8 @@ function createOrder($data, $conn) {
             $orderID = $conn->lastInsertId();  // Get the last inserted ID
               updateTable($tableObject, $conn, $orderID); // Call updateTable function after creating order
             
-            echo json_encode(["message" => "Order created successfully", "OrderID" => $orderID]);
-            http_response_code(201); // Created
+            // echo json_encode(["message" => "Order created successfully", "OrderID" => $orderID]);
+            // http_response_code(201); // Created
         } else {
             echo json_encode(["error" => "Failed to create order"]);
             http_response_code(500); // Internal Server Error
@@ -96,7 +96,6 @@ function createOrder($data, $conn) {
     }
 }
 
-
 function updateTable($tableObject, $conn, $orderID) {
     try {
         $userID = $tableObject['userID'];
@@ -106,34 +105,53 @@ function updateTable($tableObject, $conn, $orderID) {
         $tableSplitList = $tableObject['tableSplitList'];
         $menuCards = $tableObject['menuCards'];
         $total = 0;
-        $isActiveTable =0;
+        $isActiveTable = 0;
         $categoryID = $tableObject['categoryID'];
         $categoryName = $tableObject['categoryName'];
 
-        echo $hotelID, $tableNumber, $categoryID;
+        // echo $hotelID," tableNumber: ", $tableNumber," categoryID: ", $categoryID;
 
         // Check if the table already exists
-        $query1 = "SELECT * FROM tabledata WHERE HotelID = ? AND TableNumber = ? AND CategoryID = ?";
+        $query1 = "SELECT * FROM tabledata WHERE HotelID = :hotelID AND TableNumber = :tableNumber AND CategoryID = :categoryID";
         $stmt1 = $conn->prepare($query1);
-        $stmt1->bind_param('iii', $hotelID, $tableNumber, $categoryID);
+        $stmt1->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+        $stmt1->bindParam(':tableNumber', $tableNumber, PDO::PARAM_INT);
+        $stmt1->bindParam(':categoryID', $categoryID, PDO::PARAM_INT);
         $stmt1->execute();
-        $result1 = $stmt1->get_result();
 
-        if ($result1->num_rows == 0) {
+        if ($stmt1->rowCount() == 0) {
             // Insert new table entry
             $query2 = "INSERT INTO tabledata (UserID, HotelID, TableNumber, IsSplitTable, TableSplitList, MenuCards, Total, IsActiveTable, CreatedDate, UpdatedDate, CategoryID, CategoryName) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?)";
+                       VALUES (:userID, :hotelID, :tableNumber, :isSplitTable, :tableSplitList, :menuCards, :total, :isActiveTable, NOW(), NOW(), :categoryID, :categoryName)";
             $stmt2 = $conn->prepare($query2);
-            $stmt2->bind_param('iiissssss', $userID, $hotelID, $tableNumber, $isSplitTable, $tableSplitList, $menuCards, $total, $isActiveTable,now(),now(), $categoryID, $categoryName);
+            $stmt2->bindParam(':userID', $userID, PDO::PARAM_INT);
+            $stmt2->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+            $stmt2->bindParam(':tableNumber', $tableNumber, PDO::PARAM_INT);
+            $stmt2->bindParam(':isSplitTable', $isSplitTable, PDO::PARAM_STR);
+            $stmt2->bindParam(':tableSplitList', $tableSplitList, PDO::PARAM_STR);
+            $stmt2->bindParam(':menuCards', $menuCards, PDO::PARAM_STR);
+            $stmt2->bindParam(':total', $total, PDO::PARAM_STR);
+            $stmt2->bindParam(':isActiveTable', $isActiveTable, PDO::PARAM_INT);
+            $stmt2->bindParam(':categoryID', $categoryID, PDO::PARAM_INT);
+            $stmt2->bindParam(':categoryName', $categoryName, PDO::PARAM_STR);
             $stmt2->execute();
+            http_response_code(200); 
             echo json_encode(["message" => "Table added successfully"]);
         } else {
             // Update existing table
-            $query3 = "UPDATE tabledata SET IsSplitTable = ?, TableSplitList = ?, MenuCards = ?, Total = ?, IsActiveTable = ?, UpdatedDate = NOW() 
-                       WHERE HotelID = ? AND TableNumber = ? AND CategoryID = ?";
+            $query3 = "UPDATE tabledata SET IsSplitTable = :isSplitTable, TableSplitList = :tableSplitList, MenuCards = :menuCards, Total = :total, IsActiveTable = :isActiveTable, UpdatedDate = NOW() 
+                       WHERE HotelID = :hotelID AND TableNumber = :tableNumber AND CategoryID = :categoryID";
             $stmt3 = $conn->prepare($query3);
-            $stmt3->bind_param('sssssiii', $isSplitTable, $tableSplitList, $menuCards, $total, $isActiveTable, $hotelID, $tableNumber, $categoryID);
+            $stmt3->bindParam(':isSplitTable', $isSplitTable, PDO::PARAM_STR);
+            $stmt3->bindParam(':tableSplitList', $tableSplitList, PDO::PARAM_STR);
+            $stmt3->bindParam(':menuCards', $menuCards, PDO::PARAM_STR);
+            $stmt3->bindParam(':total', $total, PDO::PARAM_STR);
+            $stmt3->bindParam(':isActiveTable', $isActiveTable, PDO::PARAM_INT);
+            $stmt3->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+            $stmt3->bindParam(':tableNumber', $tableNumber, PDO::PARAM_INT);
+            $stmt3->bindParam(':categoryID', $categoryID, PDO::PARAM_INT);
             $stmt3->execute();
+            http_response_code(200); 
             echo json_encode(["message" => "Table updated successfully"]);
         }
     } catch (Exception $e) {
@@ -141,6 +159,7 @@ function updateTable($tableObject, $conn, $orderID) {
         http_response_code(500); // Internal Server Error
     }
 }
+
 
 function updateOrder($data, $conn) {
     try {
@@ -170,14 +189,14 @@ function updateOrder($data, $conn) {
 function getOrders($data, $conn) {
     try {
         $hotelID = $data['hotelID'];
-        $query = "SELECT * FROM orderdata WHERE HotelID = ?";
+        $query = "SELECT * FROM orderdata WHERE HotelID = :hotelID";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $hotelID);
+        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $orders = $result->fetch_all(MYSQLI_ASSOC);
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($orders) > 0) {
             echo json_encode(["orders" => $orders]);
         } else {
             echo json_encode(["message" => "No orders found"]);

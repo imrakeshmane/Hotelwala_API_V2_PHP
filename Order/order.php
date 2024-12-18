@@ -44,6 +44,9 @@ switch ($action) {
     case 'getOrdersFilter':
         getOrdersFilter($request, $conn);
         break;
+    case 'getRunningItems':
+        getRunningItems($request, $conn);
+        break;
     case 'delete':
         deleteOrder($request, $conn);
         break;
@@ -250,4 +253,82 @@ function deleteOrder($data, $conn) {
         http_response_code(500); // Internal Server Error
     }
 }
+
+function getRunningItems($data, $conn) {
+    $hotelID = isset($data['hotelID']) ? $data['hotelID'] : null;
+    $fromDate = isset($data['fromDate']) ? $data['fromDate'] : null;
+    $toDate = isset($data['toDate']) ? $data['toDate'] : null;
+
+    // Build query based on filters
+    if ($hotelID && $fromDate && $toDate) {
+        $sql = "SELECT * FROM orderdata WHERE HotelID = :hotelID AND CreatedDate >= :fromDate AND CreatedDate <= :toDate";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+        $stmt->bindParam(':fromDate', $fromDate, PDO::PARAM_STR);
+        $stmt->bindParam(':toDate', $toDate, PDO::PARAM_STR);
+    } elseif ($hotelID) {
+        $sql = "SELECT * FROM orderdata WHERE HotelID = :hotelID";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+    } else {
+        echo json_encode(["message" => "Invalid parameters"]);
+        http_response_code(400); // Bad Request
+        return;
+    }
+
+    $stmt->execute();
+
+    if ($stmt->rowCount() > 0) {
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $finalList = [];
+
+        foreach ($results as $e) {
+            $orderList = json_decode($e['OrderList'], true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                // Decode the nested JSON string
+                $orderList = json_decode($orderList, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (is_array($orderList)) {
+                        // echo "OrderList for ID {$e['OrderID']} is a valid array.\n";
+                        foreach ($orderList as $o) {
+                            if (empty($finalList)) {
+                                $finalList[] = [
+                                    "MenuID" => $o['MenuID'],
+                                    "MenuName" => $o['MenuName'],
+                                    "Quantity" => $o['Quantity'],
+                                ];
+                            } else {
+                                $indexOfMenu = array_search($o['MenuID'], array_column($finalList, 'MenuID'));
+                                if ($indexOfMenu === false) {
+                                    $finalList[] = [
+                                        "MenuID" => $o['MenuID'],
+                                        "MenuName" => $o['MenuName'],
+                                        "Quantity" => $o['Quantity'],
+                                    ];
+                                } else {
+                                    $finalList[$indexOfMenu]['Quantity'] += $o['Quantity'];
+                                }
+                            }
+                        }
+                    } else {
+                        echo "OrderList for ID {$e['OrderID']} is not an array after second decode.\n";
+                    }
+                } else {
+                    echo "Error decoding nested OrderList for ID {$e['OrderID']}: " . json_last_error_msg() . "\n";
+                    echo "Raw nested OrderList data: " . print_r($orderList, true) . "\n";
+                }
+            } else {
+                echo "Error decoding OrderList for ID {$e['OrderID']}: " . json_last_error_msg() . "\n";
+                echo "Raw OrderList data: " . $e['OrderList'] . "\n";
+            }
+        }
+
+        echo json_encode(["RunningItemList" => $finalList]);
+    } else {
+        echo json_encode(["message" => "RunningItemList not found"]);
+        http_response_code(404); // Not Found
+    }
+}
+
+
 ?>

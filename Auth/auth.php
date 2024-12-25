@@ -38,10 +38,10 @@ function insertUser($data, $conn) {
     $name = $data['name'];
     $mobile = $data['mobile'];
     $password = password_hash($data['password'], PASSWORD_BCRYPT);
-    $hotelID = $data['hotelId'];
+    $hotelID =0;
     $deviceToken = $data['deviceToken'];
-    $userType = $data['userType'];
-    $active = $data['active'];
+    $userType = 1;
+    $active =1;
 
     // Step 1: Check if the mobile number already exists in the database
     $checkSql = "SELECT Mobile FROM userlist WHERE Mobile = :mobile";
@@ -81,7 +81,9 @@ function insertUser($data, $conn) {
 
             // Success: User is created
             http_response_code(201); // Created
-            echo json_encode(["message" => "User created successfully","userId"=>$insertedID]);
+            loginUser($data,$conn);
+
+            // echo json_encode(["message" => "User created successfully","userId"=>$insertedID,"Data"=>$newData]);
         } else {
             // Failure: Something went wrong
             $errorInfo = $stmt->errorInfo();
@@ -164,7 +166,7 @@ function loginUser($data, $conn) {
             $setting = getSettingsByUser($id, $conn, $userType);
             $token = generateJWT($userID, $userType);
             echo json_encode([
-                "message" => "Login successful", 
+                "message" => "User Get Successfully", 
                 "token" =>$token,
                 "user" => [$row],
                 "Hotels" => $hotels,

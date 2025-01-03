@@ -215,27 +215,56 @@ function getOrders($data, $conn) {
 
 function getOrdersFilter($data, $conn) {
     try {
+        // Extract filter parameters from input
         $hotelID = $data['hotelID'];
         $fromDate = $data['fromDate'];
         $toDate = $data['toDate'];
-        $query = "SELECT * FROM orderdata WHERE HotelID = ? AND CreatedDate BETWEEN ? AND ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('iss', $hotelID, $fromDate, $toDate);
-        $stmt->execute();
-        $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $orders = $result->fetch_all(MYSQLI_ASSOC);
+        // SQL query to fetch filtered orders
+        $query = "
+            SELECT 
+                o.OrderID, o.HotelID, o.UserID, o.Total, o.OrderList, o.tableNumber, 
+                o.CategoryID, c.Name AS CategoryName, o.orderDateTime, 
+                o.CreatedDate AS OrderCreatedDate, o.UpdatedDate AS OrderUpdatedDate, 
+                o.UserNameList 
+            FROM 
+                orderdata o 
+            LEFT JOIN 
+                tablecategory c 
+            ON 
+                o.CategoryID = c.CategoryID 
+            WHERE 
+                o.HotelID = :hotelID 
+                AND o.CreatedDate BETWEEN :fromDate AND :toDate
+        ";
+
+        // Prepare and bind parameters
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+        $stmt->bindParam(':fromDate', $fromDate, PDO::PARAM_STR);
+        $stmt->bindParam(':toDate', $toDate, PDO::PARAM_STR);
+
+        // Execute query
+        $stmt->execute();
+
+        // Fetch results as an associative array
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($orders)) {
+            // Return orders in JSON format
             echo json_encode(["orders" => $orders]);
         } else {
-            echo json_encode(["message" => "No orders found"]);
+            // No orders found
             http_response_code(404); // Not Found
+            echo json_encode(["message" => "No orders found"]);
         }
     } catch (Exception $e) {
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+        // Handle errors
         http_response_code(500); // Internal Server Error
+        echo json_encode(["error" => "Error: " . $e->getMessage()]);
     }
 }
+
 
 function deleteOrder($data, $conn) {
     try {

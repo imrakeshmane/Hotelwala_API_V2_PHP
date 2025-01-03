@@ -37,6 +37,7 @@ switch($action) {
 function insertUser($data, $conn) {
     $name = $data['name'];
     $mobile = $data['mobile'];
+    $email = $data['email'];
     $password = password_hash($data['password'], PASSWORD_BCRYPT);
     $hotelID =0;
     $deviceToken = $data['deviceToken'];
@@ -61,14 +62,15 @@ function insertUser($data, $conn) {
         }
 
         // Step 2: Proceed with insertion if mobile number is unique
-        $sql = "INSERT INTO userlist (Name, Mobile, Password, HotelID, DeviceToken, UserType, Active, CreatedDate, UpdatedDate) 
-                VALUES (:name, :mobile, :password, :hotelID, :deviceToken, :userType, :active, NOW(), NOW())";
+        $sql = "INSERT INTO userlist (Name, Mobile,Email, Password, HotelID, DeviceToken, UserType, Active, CreatedDate, UpdatedDate) 
+                VALUES (:name, :mobile,:email, :password, :hotelID, :deviceToken, :userType, :active, NOW(), NOW())";
 
         $stmt = $conn->prepare($sql);
 
         // Bind parameters to prevent SQL injection
         $stmt->bindParam(':name', $name, PDO::PARAM_STR);
         $stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
         $stmt->bindParam(':password', $password, PDO::PARAM_STR);
         $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
         $stmt->bindParam(':deviceToken', $deviceToken, PDO::PARAM_STR);

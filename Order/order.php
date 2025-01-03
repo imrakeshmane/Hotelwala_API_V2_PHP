@@ -62,23 +62,25 @@ function createOrder($data, $conn) {
         $userID = $data['userID'];
         $total = $data['total'];
         $tableNumber = $data['tableNumber'];
+        $categoryID = $data['categoryID'];
         $orderDateTime = $data['orderDateTime'];  // Ensure this is in correct format
         $orderList = json_encode($data['orderList']);  // Serialize orderList (assuming it's an array)
         $userNameList = json_encode($data['userNameList']);  // Serialize userNameList (assuming it's an array)
         $tableObject = $data['tableObject'];
 
         // Insert order into orderdata table
-        $query = "INSERT INTO orderdata (HotelID, UserID, Total, OrderList, TableNumber, OrderDateTime, CreatedDate, UpdatedDate, UserNameList) 
-                  VALUES (:hotelID, :userID, :total, :orderList, :tableNumber, :orderDateTime, NOW(), NOW(), :userNameList)";
+        $query = "INSERT INTO orderdata (HotelID, UserID, Total, OrderList, TableNumber,CategoryID, OrderDateTime, CreatedDate, UpdatedDate, UserNameList) 
+                  VALUES (:hotelID, :userID, :total, :orderList, :tableNumber,:categoryID, :orderDateTime, NOW(), NOW(), :userNameList)";
         
         $stmt = $conn->prepare($query);
 
-        // Bind parameters
+        // Bind parameters,
         $stmt->bindValue(':hotelID', $hotelID, PDO::PARAM_INT);
         $stmt->bindValue(':userID', $userID, PDO::PARAM_INT);
         $stmt->bindValue(':total', $total, PDO::PARAM_INT);
         $stmt->bindValue(':orderList', $orderList, PDO::PARAM_STR);
         $stmt->bindValue(':tableNumber', $tableNumber, PDO::PARAM_INT);
+        $stmt->bindValue(':categoryID', $categoryID, PDO::PARAM_INT);
         $stmt->bindValue(':orderDateTime', $orderDateTime, PDO::PARAM_STR);
         $stmt->bindValue(':userNameList', $userNameList, PDO::PARAM_STR);
 

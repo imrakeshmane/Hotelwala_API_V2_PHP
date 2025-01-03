@@ -1,0 +1,15 @@
+SET FOREIGN_KEY_CHECKS = 0; -- Disable foreign key checks
+
+DELETE FROM expence;
+DELETE FROM expencetype;
+DELETE FROM hotels;
+DELETE FROM menucard;
+DELETE FROM orderdata;
+DELETE FROM settings;
+DELETE FROM subscription;
+DELETE FROM tablecategory;
+DELETE FROM tabledata;
+DELETE FROM userlist;
+DELETE FROM usersubscription;
+
+SET FOREIGN_KEY_CHECKS = 1; -- Enable foreign key checks

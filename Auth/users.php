@@ -127,10 +127,8 @@ function updateUserForPertucalHotel($data, $conn) {
     $name = $data['name'];
     $mobile = $data['mobile'];
     $email = $data['email'];
-    $hotelID = $data['hotelID'];
-    $deviceToken = $data['deviceToken'];
     $userType = $data['userType'];
-    $active = $data['active'];
+
 
     // Step 1: Check if the mobile number or email already exists for another user
     $checkSql = "SELECT UserID FROM userlist WHERE (Mobile = :mobile OR Email = :email) AND UserID != :userID";
@@ -156,10 +154,7 @@ function updateUserForPertucalHotel($data, $conn) {
                     Name = :name, 
                     Mobile = :mobile, 
                     Email = :email, 
-                    HotelID = :hotelID, 
-                    DeviceToken = :deviceToken, 
                     UserType = :userType, 
-                    Active = :active, 
                     UpdatedDate = NOW()
                 WHERE UserID = :userID";
 
@@ -169,10 +164,7 @@ function updateUserForPertucalHotel($data, $conn) {
         $stmt->bindParam(':name', $name, PDO::PARAM_STR);
         $stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-        $stmt->bindParam(':deviceToken', $deviceToken, PDO::PARAM_STR);
         $stmt->bindParam(':userType', $userType, PDO::PARAM_STR);
-        $stmt->bindParam(':active', $active, PDO::PARAM_INT);
         $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
 
         // Execute the query to update the user
@@ -230,9 +222,11 @@ function getAllUserForHotel($data, $conn) {
     }
 }
 
-function deleteUserForPertucalHotel($userID, $conn) {
+function deleteUserForPertucalHotel($data, $conn) {
+    $userID = isset($data['userID']) ? $data['userID'] : null;
+
     // Validate the provided UserID
-    if (empty($userID) || !is_numeric($userID)) {
+    if (empty($userID)) {
         http_response_code(400); // Bad Request
         echo json_encode(["error" => "Invalid UserID provided"]);
         return;

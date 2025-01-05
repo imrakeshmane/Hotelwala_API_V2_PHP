@@ -30,6 +30,9 @@ switch($action) {
     case 'login':
         loginUser($request, $conn);
         break;
+    case 'forgotPassword':
+        forgotPassword($request, $conn);
+        break;    
     default:
         echo json_encode(["error" => "Invalid action"]);
 }
@@ -286,6 +289,69 @@ function generateJWT($userID, $userType) {
     $jwt = "$headerEncoded.$payloadEncoded.$signatureEncoded";
 
     return $jwt;
+}
+function forgotPassword($data, $conn) {
+    try {
+        // Extract email from input
+        $email = $data['email'];
+
+        // Validate email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400); // Bad Request
+            echo json_encode(["error" => "Invalid email address"]);
+            return;
+        }
+
+        // Check if the email exists in the database
+        $query = "SELECT UserID, Name FROM userlist WHERE Email = :email";
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404); // Not Found
+            echo json_encode(["error" => "Email not registered"]);
+            return;
+        }
+
+        // Fetch user details
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $userID = $user['UserID'];
+        $userName = $user['Name'];
+
+        // Generate a new random password
+        $newPassword = bin2hex(random_bytes(4)); // 8-character random password
+        $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        // Update the password in the database
+        $updateQuery = "UPDATE userlist SET Password = :password WHERE UserID = :userID";
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bindParam(':password', $hashedPassword, PDO::PARAM_STR);
+        $updateStmt->bindParam(':userID', $userID, PDO::PARAM_INT);
+
+        if ($updateStmt->execute()) {
+            // Prepare email content
+            $subject = "Password Reset Request";
+            $message = "Hi $userName,\n\nYour password has been reset. Here is your new password:\n\n$newPassword\n\nPlease log in and change it as soon as possible.\n\nThanks,\nYour Team";
+            $headers = "From: worldtechwala@gmail.com";
+
+            // Send the email
+            if (mail($email, $subject, $message, $headers)) {
+                echo json_encode(["message" => "New password sent to your email"]);
+                http_response_code(200); // OK
+            } else {
+                echo json_encode(["error" => "Failed to send email. Please check SMTP configuration."]);
+                http_response_code(500); // Internal Server Error
+            }
+        } else {
+            echo json_encode(["error" => "Failed to update password"]);
+            http_response_code(500); // Internal Server Error
+        }
+    } catch (Exception $e) {
+        // Handle errors
+        http_response_code(500); // Internal Server Error
+        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+    }
 }
 
 

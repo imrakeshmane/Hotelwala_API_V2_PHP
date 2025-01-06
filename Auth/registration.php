@@ -50,4 +50,3 @@ if ($requestMethod == 'POST') {
         echo json_encode(["error" => "Error registering owner"]);
     }
 }
-?>

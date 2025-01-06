@@ -22,8 +22,8 @@ if (isset($payload['error'])) {
 }
 
 // Extract user ID and user type from the JWT payload
-$userID = $payload['userID'];  // Extract userID from the payload
-$userType = $payload['userType'];  // Extract userType from the payload
+$userID = $payload['owner_id'];  // Extract userID from the payload
+$userType = $payload['user_type'];  // Extract userType from the payload
 
 switch ($requestMethod) {
     case 'POST': // Create a new hotel

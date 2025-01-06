@@ -9,6 +9,7 @@ if ($requestMethod == 'POST') {
 
     // Validate input
     if (!isset($data['owner_name'], $data['owner_email'], $data['owner_phone_number'], $data['owner_password'])) {
+        http_response_code(400);
         echo json_encode(["error" => "Missing required fields"]);
         return;
     }
@@ -27,6 +28,7 @@ if ($requestMethod == 'POST') {
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
+        http_response_code(400);
         echo json_encode(["error" => "Email or phone number already exists"]);
         return;
     }
@@ -41,8 +43,10 @@ if ($requestMethod == 'POST') {
     $stmt->bindParam(':owner_password', $ownerPassword);
 
     if ($stmt->execute()) {
+        http_response_code(201);
         echo json_encode(["message" => "Owner registered successfully"]);
     } else {
+        http_response_code(500);
         echo json_encode(["error" => "Error registering owner"]);
     }
 }

@@ -4,7 +4,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "hotelwaladb";
+$dbname = "hotelwaladb_V2";
 $GLOBALS['secretKey'] = 'HotelWalaApp';
 
 try {

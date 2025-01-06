@@ -1,7 +1,11 @@
 <?php
-include '../db.php'; // Include the database connection file
-include '../validate.php';
+include '../db.php'; // Include your database connection
+include '../validate.php'; // Include the file containing getJWTFromHeader and validateJWT functions
 
+header('Content-Type: application/json');
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+
+// Get JWT token from Authorization header
 $jwt = getJWTFromHeader();
 if ($jwt === null) {
     http_response_code(401); // Unauthorized
@@ -9,6 +13,7 @@ if ($jwt === null) {
     return;
 }
 
+// Validate the JWT token
 $payload = validateJWT($jwt, $GLOBALS['secretKey']);
 if (isset($payload['error'])) {
     http_response_code(401); // Unauthorized
@@ -16,191 +21,163 @@ if (isset($payload['error'])) {
     return;
 }
 
-header('Content-Type: application/json');
+// Extract user ID and user type from the JWT payload
+$userID = $payload['userID'];  // Extract userID from the payload
+$userType = $payload['userType'];  // Extract userType from the payload
 
-// Get the request payload (assumes JSON request)
-$request = json_decode(file_get_contents('php://input'), true);
-
-// Check if action is set in the request
-if (!isset($request['action'])) {
-    echo json_encode(["error" => "Action parameter is required"]);
-    http_response_code(400); // Bad Request
-    exit;
-}
-
-$action = $request['action'];
-
-// Switch based on the action
-switch ($action) {
-    case 'insert':
-        insertHotel($request, $conn);
+switch ($requestMethod) {
+    case 'POST': // Create a new hotel
+        createHotel($conn, $userID, $userType);
         break;
-    case 'update':
-        updateHotel($request, $conn);
+    case 'GET': // Read a hotel by hotel_id
+        getHotel($conn, $userID, $userType);
         break;
-    case 'get':
-        getHotel($request, $conn);
+    case 'PUT': // Update an existing hotel
+        updateHotel($conn, $userID, $userType);
         break;
-    case 'delete':
-        deleteHotel($request, $conn);
+    case 'DELETE': // Delete a hotel by hotel_id
+        deleteHotel($conn, $userID, $userType);
         break;
     default:
-        echo json_encode(["error" => "Invalid action"]);
-        http_response_code(400); // Bad Request
+        http_response_code(405); // Method not allowed
+        echo json_encode(["error" => "Method not allowed"]);
         break;
 }
 
-function insertHotel($data, $conn) {
-    try {
-        $userID = $data['userID'];
-        $name = $data['name'];
-        $mobile = $data['mobile'];
-        $address = $data['address'];
-        $pincode = $data['pincode'];
-        $active = $data['active'];
+function createHotel($conn, $userID, $userType) {
+    // Only allow owners to create hotels
+    if ($userType !== 'owner') {
+        echo json_encode(["error" => "Only owners can create hotels"]);
+        return;
+    }
 
-        $sql = "INSERT INTO hotels (UserID, Name, Mobile, Address, Pincode, Active, CreatedDate, UpdatedDate) 
-                VALUES (:userID, :name, :mobile, :address, :pincode, :active, NOW(), NOW())";
-        
-        $stmt = $conn->prepare($sql);
+    $data = json_decode(file_get_contents('php://input'), true);
 
-        $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
-        $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-        $stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
-        $stmt->bindParam(':address', $address, PDO::PARAM_STR);
-        $stmt->bindParam(':pincode', $pincode, PDO::PARAM_STR);
-        $stmt->bindParam(':active', $active, PDO::PARAM_INT);
+    // Validate input
+    if (!isset($data['hotel_name'], $data['hotel_location'])) {
+        echo json_encode(["error" => "Missing required fields"]);
+        return;
+    }
 
-        if ($stmt->execute()) {
-            $insertedID = $conn->lastInsertId();
+    $hotelName = $data['hotel_name'];
+    $hotelLocation = $data['hotel_location'];
 
-            // Insert into settings
-            $query = "INSERT INTO settings (HotelID, UserID) VALUES (?, ?)";
-            $stmt = $conn->prepare($query);
-            $result = $stmt->execute([$insertedID, $userID]);
+    // Insert the new hotel
+    $sql = "INSERT INTO Hotels (owner_id, hotel_name, hotel_location) 
+            VALUES (:owner_id, :hotel_name, :hotel_location)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':owner_id', $userID); // Use the owner ID from the token
+    $stmt->bindParam(':hotel_name', $hotelName);
+    $stmt->bindParam(':hotel_location', $hotelLocation);
 
-            if ($result) {
-                http_response_code(201); // Created
-                echo json_encode([
-                    "message" => "Hotel added successfully.",
-                    "HotelID" => $insertedID,
-                ]);
-            } else {
-                http_response_code(500); // Internal Server Error
-                echo json_encode(["error" => "Settings Error"]);
-            }
-        } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
-        }
-    } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+    if ($stmt->execute()) {
+        echo json_encode(["message" => "Hotel created successfully"]);
+    } else {
+        echo json_encode(["error" => "Error creating hotel"]);
     }
 }
 
-function updateHotel($data, $conn) {
-    try {
-        $hotelID = $data['hotelID'];
-        $userID = $data['userID'];
-        $name = $data['name'];
-        $mobile = $data['mobile'];
-        $address = $data['address'];
-        $pincode = $data['pincode'];
-        $active = $data['active'];
-
-        $sql = "UPDATE hotels SET 
-                    UserID = :userID, 
-                    Name = :name, 
-                    Mobile = :mobile, 
-                    Address = :address, 
-                    Pincode = :pincode, 
-                    Active = :active, 
-                    UpdatedDate = NOW() 
-                WHERE HotelID = :hotelID";
-        
-        $stmt = $conn->prepare($sql);
-
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-        $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
-        $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-        $stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
-        $stmt->bindParam(':address', $address, PDO::PARAM_STR);
-        $stmt->bindParam(':pincode', $pincode, PDO::PARAM_STR);
-        $stmt->bindParam(':active', $active, PDO::PARAM_INT);
-
-        if ($stmt->execute()) {
-            http_response_code(200); // OK
-            echo json_encode(["message" => "Hotel updated successfully"]);
-        } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
-        }
-    } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+function getHotel($conn, $userID, $userType) {
+    if (!isset($_GET['hotel_id'])) {
+        echo json_encode(["error" => "Hotel ID is required"]);
+        return;
     }
-}
 
-function getHotel($data, $conn) {
-    try {
-        $hotelID = isset($data['hotelID']) ? $data['hotelID'] : null;
-        $userID = isset($data['userID']) ? $data['userID'] : null;
+    $hotelId = $_GET['hotel_id'];
 
-        if ($hotelID && $userID) {
-            $sql = "SELECT * FROM hotels WHERE HotelID = :hotelID AND UserID = :userID";
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-            $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
-        } elseif ($hotelID) {
-            $sql = "SELECT * FROM hotels WHERE HotelID = :hotelID";
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-        } elseif ($userID) {
-            $sql = "SELECT * FROM hotels WHERE UserID = :userID";
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
-        } else {
-            $sql = "SELECT * FROM hotels";
-            $stmt = $conn->prepare($sql);
-        }
-
+    // Check if the user is authorized to view the hotel (Only owners or users working in the hotel)
+    if ($userType === 'user') {
+        // Fetch the hotel the user works at
+        $sqlUserHotel = "SELECT * FROM Users WHERE user_id = :user_id AND hotel_id = :hotel_id";
+        $stmt = $conn->prepare($sqlUserHotel);
+        $stmt->bindParam(':user_id', $userID);
+        $stmt->bindParam(':hotel_id', $hotelId);
         $stmt->execute();
 
-        if ($stmt->rowCount() > 0) {
-            $hotels = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(["hotels" => $hotels]);
-        } else {
-            echo json_encode(["message" => "No hotels found"]);
-            http_response_code(404); // Not Found
+        if ($stmt->rowCount() === 0) {
+            echo json_encode(["error" => "User is not authorized to view this hotel"]);
+            return;
         }
-    } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+    }
+
+    // Fetch hotel details
+    $sql = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':hotel_id', $hotelId);
+    $stmt->execute();
+
+    if ($stmt->rowCount() > 0) {
+        $hotel = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo json_encode(["hotel" => $hotel]);
+    } else {
+        echo json_encode(["error" => "Hotel not found"]);
     }
 }
 
-function deleteHotel($data, $conn) {
-    try {
-        $hotelID = $data['hotelID'];
+function updateHotel($conn, $userID, $userType) {
+    if (!isset($_GET['hotel_id'])) {
+        echo json_encode(["error" => "Hotel ID is required"]);
+        return;
+    }
 
-        $sql = "DELETE FROM hotels WHERE HotelID = :hotelID";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
+    $hotelId = $_GET['hotel_id'];
 
-        if ($stmt->execute()) {
-            http_response_code(200); // OK
-            echo json_encode(["message" => "Hotel deleted successfully"]);
-        } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
-        }
-    } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+    // Only owners can update hotels
+    if ($userType !== 'owner') {
+        echo json_encode(["error" => "Only owners can update hotels"]);
+        return;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    // Validate input
+    if (!isset($data['hotel_name'], $data['hotel_location'])) {
+        echo json_encode(["error" => "Missing required fields"]);
+        return;
+    }
+
+    $hotelName = $data['hotel_name'];
+    $hotelLocation = $data['hotel_location'];
+
+    // Update the hotel
+    $sql = "UPDATE Hotels SET hotel_name = :hotel_name, hotel_location = :hotel_location WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':hotel_name', $hotelName);
+    $stmt->bindParam(':hotel_location', $hotelLocation);
+    $stmt->bindParam(':hotel_id', $hotelId);
+    $stmt->bindParam(':owner_id', $userID);
+
+    if ($stmt->execute()) {
+        echo json_encode(["message" => "Hotel updated successfully"]);
+    } else {
+        echo json_encode(["error" => "Error updating hotel"]);
+    }
+}
+
+function deleteHotel($conn, $userID, $userType) {
+    if (!isset($_GET['hotel_id'])) {
+        echo json_encode(["error" => "Hotel ID is required"]);
+        return;
+    }
+
+    $hotelId = $_GET['hotel_id'];
+
+    // Only owners can delete hotels
+    if ($userType !== 'owner') {
+        echo json_encode(["error" => "Only owners can delete hotels"]);
+        return;
+    }
+
+    // Delete the hotel
+    $sql = "DELETE FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':hotel_id', $hotelId);
+    $stmt->bindParam(':owner_id', $userID);
+
+    if ($stmt->execute()) {
+        echo json_encode(["message" => "Hotel deleted successfully"]);
+    } else {
+        echo json_encode(["error" => "Error deleting hotel"]);
     }
 }
 ?>

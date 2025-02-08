@@ -5,20 +5,27 @@ include '../validate.php'; // Include the file containing getJWTFromHeader and v
 header('Content-Type: application/json');
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
+// Reusable function to send standardized responses
+function sendResponse($success, $message, $data = null, $statusCode = 200) {
+    http_response_code($statusCode);
+    echo json_encode([
+        "success" => $success,
+        "message" => $message,
+        "data" => $data
+    ]);
+    exit;
+}
+
 // Get JWT token from Authorization header
 $jwt = getJWTFromHeader();
 if ($jwt === null) {
-    http_response_code(401); // Unauthorized
-    echo json_encode(["error" => "Token is missing or invalid"]);
-    return;
+    sendResponse(false, "Token is missing or invalid", null, 401);
 }
 
 // Validate the JWT token
 $payload = validateJWT($jwt, $GLOBALS['secretKey']);
 if (isset($payload['error'])) {
-    http_response_code(401); // Unauthorized
-    echo json_encode(["error" => "Invalid token"]);
-    return;
+    sendResponse(false, "Invalid token", null, 401);
 }
 
 // Extract owner ID and user type from the JWT payload
@@ -26,37 +33,31 @@ $ownerID = $payload['owner_id'];
 $userType = $payload['user_type'];
 
 if ($userType !== 'owner') {
-    http_response_code(403); // Forbidden
-    echo json_encode(["error" => "Only owners can manage categories and tables"]);
-    return;
+    sendResponse(false, "Only owners can manage categories and tables", null, 403);
 }
 
 switch ($requestMethod) {
-    case 'POST': // Create a new category
+    case 'POST':
         createCategory($conn, $ownerID);
         break;
-    case 'GET': // Get categories and their tables
+    case 'GET':
         getCategories($conn, $ownerID);
         break;
-    case 'PUT': // Update a category
+    case 'PUT':
         updateCategory($conn, $ownerID);
         break;
-    case 'DELETE': // Delete a category
+    case 'DELETE':
         deleteCategory($conn, $ownerID);
         break;
     default:
-        http_response_code(405); // Method not allowed
-        echo json_encode(["error" => "Method not allowed"]);
-        break;
+        sendResponse(false, "Method not allowed", null, 405);
 }
 
 function createCategory($conn, $ownerID) {
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (!isset($data['hotel_id'], $data['category_name'], $data['num_of_tables'])) {
-        http_response_code(400); // Bad Request
-        echo json_encode(["error" => "Missing required fields"]);
-        return;
+        sendResponse(false, "Missing required fields", null, 400);
     }
 
     $hotelID = $data['hotel_id'];
@@ -71,9 +72,7 @@ function createCategory($conn, $ownerID) {
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
-        http_response_code(403); // Forbidden
-        echo json_encode(["error" => "Unauthorized to manage this hotel"]);
-        return;
+        sendResponse(false, "Unauthorized to manage this hotel", null, 403);
     }
 
     // Insert the category
@@ -91,26 +90,21 @@ function createCategory($conn, $ownerID) {
         $sql = "INSERT INTO Tables (category_id, table_number) VALUES (:category_id, :table_number)";
         $stmt = $conn->prepare($sql);
         for ($i = 1; $i <= $numOfTables; $i++) {
-            // $tableNumber = "T" . $i;
             $tableNumber = $i;
             $stmt->bindParam(':category_id', $categoryID);
             $stmt->bindParam(':table_number', $tableNumber);
             $stmt->execute();
         }
 
-        http_response_code(201); // Created
-        echo json_encode(["message" => "Category and tables created successfully"]);
+        sendResponse(true, "Category and tables created successfully", ["category_id" => $categoryID], 201);
     } else {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error creating category"]);
+        sendResponse(false, "Error creating category", null, 500);
     }
 }
 
 function getCategories($conn, $ownerID) {
     if (!isset($_GET['hotel_id'])) {
-        http_response_code(400); // Bad Request
-        echo json_encode(["error" => "Hotel ID is required"]);
-        return;
+        sendResponse(false, "Hotel ID is required", null, 400);
     }
 
     $hotelID = $_GET['hotel_id'];
@@ -123,9 +117,7 @@ function getCategories($conn, $ownerID) {
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
-        http_response_code(403); // Forbidden
-        echo json_encode(["error" => "Unauthorized to view this hotel's categories"]);
-        return;
+        sendResponse(false, "Unauthorized to view this hotel's categories", null, 403);
     }
 
     // Fetch categories and their tables
@@ -159,19 +151,14 @@ function getCategories($conn, $ownerID) {
         }
     }
 
-    http_response_code(200); // OK
-    echo json_encode(["categories" => array_values($categories)]);
+    sendResponse(true, "Categories fetched successfully", ["categories" => array_values($categories)], 200);
 }
-
-
 
 function updateCategory($conn, $ownerID) {
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (!isset($data['category_id'], $data['category_name'])) {
-        http_response_code(400); // Bad Request
-        echo json_encode(["error" => "Missing required fields"]);
-        return;
+        sendResponse(false, "Missing required fields", null, 400);
     }
 
     $categoryID = $data['category_id'];
@@ -188,9 +175,7 @@ function updateCategory($conn, $ownerID) {
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
-        http_response_code(403); // Forbidden
-        echo json_encode(["error" => "Unauthorized to update this category"]);
-        return;
+        sendResponse(false, "Unauthorized to update this category", null, 403);
     }
 
     // Update the category name
@@ -200,11 +185,9 @@ function updateCategory($conn, $ownerID) {
     $stmt->bindParam(':category_id', $categoryID);
 
     if ($stmt->execute()) {
-        http_response_code(200); // OK
-        echo json_encode(["message" => "Category updated successfully"]);
+        sendResponse(true, "Category updated successfully", null, 200);
     } else {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error updating category"]);
+        sendResponse(false, "Error updating category", null, 500);
     }
 }
 
@@ -212,9 +195,7 @@ function deleteCategory($conn, $ownerID) {
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (!isset($data['category_id'])) {
-        http_response_code(400); // Bad Request
-        echo json_encode(["error" => "Category ID is required"]);
-        return;
+        sendResponse(false, "Category ID is required", null, 400);
     }
 
     $categoryID = $data['category_id'];
@@ -230,9 +211,7 @@ function deleteCategory($conn, $ownerID) {
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
-        http_response_code(403); // Forbidden
-        echo json_encode(["error" => "Unauthorized to delete this category"]);
-        return;
+        sendResponse(false, "Unauthorized to delete this category", null, 403);
     }
 
     // Delete the category and its associated tables
@@ -241,11 +220,9 @@ function deleteCategory($conn, $ownerID) {
     $stmt->bindParam(':category_id', $categoryID);
 
     if ($stmt->execute()) {
-        http_response_code(200); // OK
-        echo json_encode(["message" => "Category and associated tables deleted successfully"]);
+        sendResponse(true, "Category and associated tables deleted successfully", null, 200);
     } else {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error deleting category"]);
+        sendResponse(false, "Error deleting category", null, 500);
     }
 }
 ?>

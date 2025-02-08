@@ -1,15 +1,21 @@
 SET FOREIGN_KEY_CHECKS = 0; -- Disable foreign key checks
 
-DELETE FROM expence;
+DELETE FROM admins;
+DELETE FROM categories;
+DELETE FROM expenses;
+DELETE FROM expense_types;
+DELETE FROM hotels;
 DELETE FROM expencetype;
 DELETE FROM hotels;
-DELETE FROM menucard;
-DELETE FROM orderdata;
+DELETE FROM menus;
+DELETE FROM orderhistory;
+DELETE FROM owners;
+DELETE FROM owner_subscriptions;
+DELETE FROM selected_hotel_subscriptions;
+DELETE FROM selected_user_subscriptions;
 DELETE FROM settings;
-DELETE FROM subscription;
-DELETE FROM tablecategory;
-DELETE FROM tabledata;
-DELETE FROM userlist;
-DELETE FROM usersubscription;
+DELETE FROM subscription_plans;
+DELETE FROM tables;
+DELETE FROM users;
 
 SET FOREIGN_KEY_CHECKS = 1; -- Enable foreign key checks

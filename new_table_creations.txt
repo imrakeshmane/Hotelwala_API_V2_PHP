@@ -1,0 +1,185 @@
+CREATE TABLE Admins (
+    admin_id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_name VARCHAR(100) NOT NULL,
+    admin_email VARCHAR(100) NOT NULL UNIQUE,
+    admin_phone_number VARCHAR(15) NOT NULL UNIQUE,
+    admin_password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Owners (
+    owner_id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_name VARCHAR(100) NOT NULL,
+    owner_email VARCHAR(100) NOT NULL UNIQUE,
+    owner_phone_number VARCHAR(15) NOT NULL UNIQUE,
+    owner_password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Hotels (
+    hotel_id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id INT NOT NULL, -- Updated to reference the Owners table
+    hotel_name VARCHAR(100) NOT NULL,
+    hotel_location VARCHAR(255),
+    pincode VARCHAR(10) NOT NULL,
+    hotel_mobile_number VARCHAR(15) NOT NULL,
+    hotel_gst_number VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES Owners(owner_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Menus (
+    menu_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL, -- Links the menu item to a specific hotel
+    menu_name VARCHAR(255) NOT NULL, -- Name of the menu item
+    menu_type ENUM('veg', 'non-veg', 'beverage', 'dessert') NOT NULL, -- Type of the menu item
+    menu_price DECIMAL(10, 2) NOT NULL, -- Price of the menu item
+    menu_stock INT DEFAULT 0, -- Stock quantity of the menu item
+    is_active BOOLEAN DEFAULT TRUE, -- Indicates if the menu item is active
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    category_name VARCHAR(100) NOT NULL,
+    category_table_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Tables (
+    table_id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT NOT NULL,
+    table_number VARCHAR(10) NOT NULL,
+    total_cost INT NOT NULL,
+    table_status ENUM('available', 'occupied') DEFAULT 'available',
+    is_split BOOLEAN DEFAULT FALSE, -- Indicates if the table is split
+    split_order_data JSON DEFAULT NULL, -- JSON to store split order data
+    order_data JSON DEFAULT NULL, -- JSON to store the current order data
+    taken_by_id INT DEFAULT NULL, -- ID of the user/owner who took the order
+    taken_by_role ENUM('owner', 'user') DEFAULT NULL, -- Role of the person who took the order
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES Categories(category_id) ON DELETE CASCADE,
+    UNIQUE(category_id, table_number)
+);
+
+CREATE TABLE OrderHistory (
+    order_history_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    table_id INT NOT NULL,
+    split_order_id INT DEFAULT NULL, -- NULL for non-split orders, otherwise links to the original order
+    is_split BOOLEAN DEFAULT FALSE, -- Indicates whether this is part of a split
+    order_data JSON NOT NULL, -- Stores order details (items, quantity, price)
+    total_cost DECIMAL(10, 2) NOT NULL,
+    payment_status ENUM('unpaid', 'paid') DEFAULT 'unpaid',
+    taken_by_id INT DEFAULT NULL, -- ID of the user/owner who took the order
+    taken_by_role ENUM('owner', 'user') DEFAULT NULL, -- Role of the person who took the order
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE,
+    FOREIGN KEY (table_id) REFERENCES Tables(table_id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
+    user_role ENUM('manager', 'waiter', 'chef') NOT NULL,
+    user_phone_number VARCHAR(15) NOT NULL UNIQUE,
+    user_password VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE, -- Indicates if the user is active or blocked
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Settings (
+    setting_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    gst_enabled BOOLEAN DEFAULT TRUE, -- Indicates if GST is enabled
+    single_bill_enabled BOOLEAN DEFAULT FALSE, -- Indicates if single bill per table is enabled
+    kot_enabled BOOLEAN DEFAULT TRUE, -- Indicates if KOT (Kitchen Order Ticket) is enabled
+    bill_first_enabled BOOLEAN DEFAULT FALSE, -- Indicates if bill-first workflow is enabled
+    always_printer_enable BOOLEAN DEFAULT TRUE, -- Indicates if the printer should always be enabled
+    cgst_percentage DECIMAL(5, 2) DEFAULT 0.00, -- CGST percentage
+    sgst_percentage DECIMAL(5, 2) DEFAULT 0.00, -- SGST percentage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Expense_Types (
+    expense_type_id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    expense_type_name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Expenses (
+    expense_id INT AUTO_INCREMENT PRIMARY KEY,
+    expense_type_id INT NOT NULL,
+    expense_amount DECIMAL(10, 2) NOT NULL,
+    expense_description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (expense_type_id) REFERENCES Expense_Types(expense_type_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Subscription_Plans (
+    plan_id INT AUTO_INCREMENT PRIMARY KEY,
+    plan_name VARCHAR(100) NOT NULL,   -- e.g., "6 Month Ultimate Pack"
+    plan_duration INT NOT NULL,        -- in months
+    plan_price DECIMAL(10, 2) NOT NULL,
+    num_of_hotels_allowed INT NOT NULL,  -- Max hotels benefiting from the plan
+    num_of_users_allowed INT NOT NULL,   -- Max users benefiting from the plan
+    ad_removal BOOLEAN DEFAULT TRUE,    -- Whether ad removal is included
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Owner_Subscriptions (
+    owner_subscription_id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id INT NOT NULL,
+    plan_id INT NOT NULL,
+    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_date TIMESTAMP NULL, -- Allow NULL for end_date
+    status ENUM('active', 'expired', 'suspended') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES Owners(owner_id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES Subscription_Plans(plan_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Selected_Hotel_Subscriptions (
+    selected_hotel_subscription_id INT AUTO_INCREMENT PRIMARY KEY,
+    owner_subscription_id INT NOT NULL,
+    hotel_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_subscription_id) REFERENCES Owner_Subscriptions(owner_subscription_id) ON DELETE CASCADE,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Selected_User_Subscriptions (
+    selected_user_subscription_id INT AUTO_INCREMENT PRIMARY KEY,
+    selected_hotel_subscription_id INT NOT NULL,
+    user_id INT NOT NULL,
+    ad_removal BOOLEAN DEFAULT TRUE,    -- Benefit for the user
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (selected_hotel_subscription_id) REFERENCES Selected_Hotel_Subscriptions(selected_hotel_subscription_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);

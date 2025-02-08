@@ -1,0 +1,110 @@
+{
+	"info": {
+		"_postman_id": "b2de7ea8-86c1-438b-b84a-701995004665",
+		"name": "Hotelwala_V2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29280927"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "owner_registration",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"owner_name\": \"John2 Doe\",\r\n  \"owner_email\": \"johndoe@example.com\",\r\n  \"owner_phone_number\": \"+91 9876543213\",\r\n  \"owner_password\": \"password123\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/Auth/registration.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"Auth",
+								"registration.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "{{BASE_URL}}/Auth/login.php",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"phone_number\": \"+91 9876543210\",\r\n  \"password\": \"password123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/Auth/login.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"Auth",
+								"login.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Hotel",
+			"item": [
+				{
+					"name": "New Request",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6MSwib3duZXJfbmFtZSI6IkpvaG4gRG9lIiwib3duZXJfZW1haWwiOiJqb2huZG9lQGV4YW1wbGUuY29tIiwidXNlcl90eXBlIjoib3duZXIiLCJpYXQiOjE3MzYxNTI2NzksImV4cCI6MTczNjE1NjI3OX0.HWQgFPqEEO2VykTAtHTSjYWH1ewTmqK2MSQq9kipFuM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotel_name\": \"Hotel Test\",\r\n    \"hotel_location\": \"Mumbai\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/Auth/hotel.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"Auth",
+								"hotel.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

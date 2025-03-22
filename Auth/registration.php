@@ -5,7 +5,8 @@ header('Content-Type: application/json');
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
 // Function to generate JWT
-function generateJWT($payload) {
+function generateJWT($payload)
+{
     $key = $GLOBALS['secretKey'];
     $issuedAt = time();
     $expirationTime = $issuedAt + 3600; // JWT valid for 1 hour
@@ -88,4 +89,3 @@ if ($requestMethod == 'POST') {
         echo json_encode(["success" => false, "message" => "Error registering owner", "data" => null]);
     }
 }
-?>

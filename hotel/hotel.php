@@ -74,8 +74,25 @@ function createHotel($conn, $userID, $userType)
     $stmt->bindParam(':hotel_mobile_number', $hotelMobileNumber);
 
     if ($stmt->execute()) {
-        http_response_code(201); // Created
-        echo json_encode(["message" => "Hotel created successfully"]);
+
+  // Get the last inserted hotel ID
+  $hotelId = $conn->lastInsertId();
+
+  // Query the database for the newly created hotel record
+  $sqlSelect = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+  $stmtSelect = $conn->prepare($sqlSelect);
+  $stmtSelect->bindParam(':hotel_id', $hotelId);
+  $stmtSelect->execute();
+  $hotelData = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+
+  http_response_code(201); // Created
+  echo json_encode([
+      "message" => "Hotel created successfully",
+      "data" => $hotelData
+  ]);
+
+        // http_response_code(201); // Created
+        // echo json_encode(["message" => "Hotel created successfully"]);
     } else {
         http_response_code(500); // Internal Server Error
         echo json_encode(["error" => "Error creating hotel"]);

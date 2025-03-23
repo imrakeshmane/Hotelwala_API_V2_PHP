@@ -86,21 +86,53 @@ function createCategory($conn, $ownerID) {
     if ($stmt->execute()) {
         $categoryID = $conn->lastInsertId();
 
-        // Generate tables for the category
-        $sql = "INSERT INTO Tables (category_id, table_number) VALUES (:category_id, :table_number)";
-        $stmt = $conn->prepare($sql);
+        // Insert tables for the category
+        $sqlTable = "INSERT INTO Tables (category_id, table_number) VALUES (:category_id, :table_number)";
+        $stmtTable = $conn->prepare($sqlTable);
         for ($i = 1; $i <= $numOfTables; $i++) {
             $tableNumber = $i;
-            $stmt->bindParam(':category_id', $categoryID);
-            $stmt->bindParam(':table_number', $tableNumber);
-            $stmt->execute();
+            $stmtTable->bindParam(':category_id', $categoryID);
+            $stmtTable->bindParam(':table_number', $tableNumber);
+            $stmtTable->execute();
         }
 
-        sendResponse(true, "Category and tables created successfully", ["category_id" => $categoryID], 201);
+        // Now fetch the newly created category along with its tables using a LEFT JOIN
+        $sqlSelect = "SELECT c.category_id, c.category_name, c.category_table_count,
+                             t.table_id, t.table_number, t.table_status
+                      FROM Categories c
+                      LEFT JOIN Tables t ON c.category_id = t.category_id
+                      WHERE c.category_id = :category_id
+                      ORDER BY t.table_number";
+        $stmtSelect = $conn->prepare($sqlSelect);
+        $stmtSelect->bindParam(':category_id', $categoryID);
+        $stmtSelect->execute();
+
+        // Build the category structure
+        $categoryData = null;
+        while ($row = $stmtSelect->fetch(PDO::FETCH_ASSOC)) {
+            if (!$categoryData) {
+                $categoryData = [
+                    "category_id" => $row['category_id'],
+                    "category_name" => $row['category_name'],
+                    "category_table_count" => $row['category_table_count'],
+                    "tables" => []
+                ];
+            }
+            if ($row['table_id']) {
+                $categoryData["tables"][] = [
+                    "table_id" => $row['table_id'],
+                    "table_number" => $row['table_number'],
+                    "table_status" => $row['table_status']
+                ];
+            }
+        }
+
+        sendResponse(true, "Category and tables created successfully", $categoryData, 201);
     } else {
         sendResponse(false, "Error creating category", null, 500);
     }
 }
+
 
 function getCategories($conn, $ownerID) {
     if (!isset($_GET['hotel_id'])) {

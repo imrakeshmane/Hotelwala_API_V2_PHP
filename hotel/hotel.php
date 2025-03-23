@@ -75,21 +75,23 @@ function createHotel($conn, $userID, $userType)
 
     if ($stmt->execute()) {
 
-  // Get the last inserted hotel ID
-  $hotelId = $conn->lastInsertId();
+        // Get the last inserted hotel ID
+        $hotelId = $conn->lastInsertId();
 
-  // Query the database for the newly created hotel record
-  $sqlSelect = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
-  $stmtSelect = $conn->prepare($sqlSelect);
-  $stmtSelect->bindParam(':hotel_id', $hotelId);
-  $stmtSelect->execute();
-  $hotelData = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+        // Query the database for the newly created hotel record
+        $sqlSelect = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+        $stmtSelect = $conn->prepare($sqlSelect);
+        $stmtSelect->bindParam(':hotel_id', $hotelId);
+        $stmtSelect->execute();
+        $hotelData = $stmtSelect->fetch(PDO::FETCH_ASSOC);
 
-  http_response_code(201); // Created
-  echo json_encode([
-      "message" => "Hotel created successfully",
-      "data" => $hotelData
-  ]);
+        $hotelData['categories'] = [];
+
+        http_response_code(201); // Created
+        echo json_encode([
+            "message" => "Hotel created successfully",
+            "data" => $hotelData
+        ]);
 
         // http_response_code(201); // Created
         // echo json_encode(["message" => "Hotel created successfully"]);

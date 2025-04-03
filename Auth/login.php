@@ -75,7 +75,7 @@ if ($requestMethod == 'POST') {
         $categories = $stmtCategories->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($categories as &$category) {
-          $sqlTables = "SELECT * FROM Tables WHERE category_id = :category_id";
+          $sqlTables = "SELECT * FROM Tables WHERE category_id = :category_id  ORDER BY CAST(table_number AS UNSIGNED) ASC";
           $stmtTables = $conn->prepare($sqlTables);
           $stmtTables->bindParam(':category_id', $category['category_id']);
           $stmtTables->execute();

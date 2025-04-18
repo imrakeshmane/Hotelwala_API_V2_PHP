@@ -91,8 +91,14 @@ function createMenu($conn, $userID, $userType) {
     $stmt->bindParam(':is_active', $isActive);
 
     if ($stmt->execute()) {
+        $sql = "SELECT * FROM Menus WHERE hotel_id = :hotel_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':hotel_id', $hotelId);
+        $stmt->execute();
+        $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
         http_response_code(201); // Created
-        echo json_encode(["message" => "Menu item created successfully"]);
+        echo json_encode(["message" => "Menu item created successfully", "menus"=>$menus]);
     } else {
         http_response_code(500); // Internal Server Error
         echo json_encode(["error" => "Error creating menu item"]);
@@ -184,8 +190,13 @@ function updateMenu($conn, $userID, $userType) {
     $stmt->bindParam(':hotel_id', $hotelId);
 
     if ($stmt->execute()) {
+        $sql = "SELECT * FROM Menus WHERE hotel_id = :hotel_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':hotel_id', $hotelId);
+        $stmt->execute();
+        $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
         http_response_code(200); // OK
-        echo json_encode(["message" => "Menu item updated successfully"]);
+        echo json_encode(["message" => "Menu item updated successfully","menus"=>$menus]);
     } else {
         http_response_code(500); // Internal Server Error
         echo json_encode(["error" => "Error updating menu item"]);

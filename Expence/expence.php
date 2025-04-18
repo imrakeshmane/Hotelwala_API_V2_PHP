@@ -1,196 +1,175 @@
 <?php
-include '../db.php'; // Include the database connection file
+include '../db.php';
 include '../validate.php';
+
+header('Content-Type: application/json');
 
 $jwt = getJWTFromHeader();
 if ($jwt === null) {
-    http_response_code(401); // Unauthorized
+    http_response_code(401);
     echo json_encode(["error" => "Token is missing or invalid"]);
     return;
 }
 
 $payload = validateJWT($jwt, $GLOBALS['secretKey']);
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+
 if (isset($payload['error'])) {
-    http_response_code(401); // Unauthorized
+    http_response_code(401);
     echo json_encode(["error" => "Invalid token"]);
     return;
 }
 
-header('Content-Type: application/json');
-
-// Get the request payload (assumes JSON request)
 $request = json_decode(file_get_contents('php://input'), true);
 
-// Check if action is set in the request
-if (!isset($request['action'])) {
-    echo json_encode(["error" => "Action parameter is required"]);
-    http_response_code(400); // Bad Request
-    exit;
-}
+// if (!isset($request['action'])) {
+//     http_response_code(400);
+//     echo json_encode(["error" => "Action parameter is required"]);
+//     exit;
+// }
 
-$action = $request['action'];
+// $action = $request['action'];
 
-// Switch based on the action
-switch ($action) {
-    case 'insert':
-        insertExpence($request, $conn);
+switch ($requestMethod) {
+    case 'POST':
+        insertExpense($request, $conn);
         break;
-    case 'update':
-        updateExpence($request, $conn);
+    case 'PUT':
+        updateExpense($request, $conn);
         break;
-    case 'get':
-        getExpence($request, $conn);
+    case 'GET':
+        getExpenses($request, $conn);
         break;
     case 'delete':
-        deleteExpence($request, $conn);
+        deleteExpense($request, $conn);
         break;
     case 'getByDate':
-        getExpenceDate($request, $conn);
+        getExpensesByDate($request, $conn);
         break;
     default:
+        http_response_code(400);
         echo json_encode(["error" => "Invalid action"]);
-        http_response_code(400); // Bad Request
         break;
 }
-
-function insertExpence($data, $conn) {
+function insertExpense($data, $conn) {
     try {
-        $userID = $data['userID'];
-        $hotelID = $data['hotelID'];
-        $expTypeID = $data['expTypeID'];
-        $amount = $data['amount'];
-        $note = $data['note'];
+        $typeID = $data['expense_type_id'];
+        $amount = $data['expense_amount'];
+        $desc = $data['expense_description'];
 
-        $sql = "INSERT INTO expence (ExpTypeID, UserID, HotelID, Amount, Note, CreatedDate, UpdatedDate) 
-                VALUES (:expTypeID, :userID, :hotelID, :amount, :note, NOW(), NOW())";
+        // Check if the expense_type_id exists
+        $typeCheck = $conn->prepare("SELECT 1 FROM expense_types WHERE expense_type_id = :typeID");
+        $typeCheck->bindParam(':typeID', $typeID, PDO::PARAM_INT);
+        $typeCheck->execute();
 
+        if ($typeCheck->rowCount() === 0) {
+            http_response_code(400);
+            echo json_encode(["error" => "Invalid expense_type_id. No matching record in expense_types table."]);
+            return;
+        }
+
+        // Proceed with insertion
+        $sql = "INSERT INTO expenses (expense_type_id, expense_amount, expense_description, created_at, updated_at)
+                VALUES (:typeID, :amount, :descp, NOW(), NOW())";
         $stmt = $conn->prepare($sql);
 
-        $stmt->bindParam(':expTypeID', $expTypeID, PDO::PARAM_INT);
-        $stmt->bindParam(':userID', $userID, PDO::PARAM_INT);
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-        $stmt->bindParam(':amount', $amount, PDO::PARAM_STR);
-        $stmt->bindParam(':note', $note, PDO::PARAM_STR);
+        $stmt->bindParam(':typeID', $typeID);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':descp', $desc);
 
         if ($stmt->execute()) {
-            $insertedID = $conn->lastInsertId();
-            http_response_code(201); // Created
+            http_response_code(201);
             echo json_encode([
-                "message" => "Expense added successfully.",
-                "ExpID" => $insertedID,
+                "message" => "Expense added successfully",
+                "expense_id" => $conn->lastInsertId()
             ]);
         } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
+            http_response_code(500);
+            echo json_encode(["error" => $stmt->errorInfo()[2]]);
         }
     } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
     }
 }
 
-function updateExpence($data, $conn) {
+
+function updateExpense($data, $conn) {
     try {
-        $expID = $data['expID'];
-        $amount = $data['amount'];
-        $note = $data['note'];
+        $id = $data['expense_id'];
+        $typeID = $data['expense_type_id'];
+        $amount = $data['expense_amount'];
+        $desc = $data['expense_description'];
 
-        $sql = "UPDATE expence SET 
-                    Amount = :amount, 
-                    Note = :note, 
-                    UpdatedDate = NOW() 
-                WHERE ExpID = :expID";
-
+        $sql = "UPDATE expenses SET expense_type_id = :typeID, expense_amount = :amount, 
+                expense_description = :desc, updated_at = NOW() WHERE expense_id = :id";
         $stmt = $conn->prepare($sql);
-
-        $stmt->bindParam(':expID', $expID, PDO::PARAM_INT);
-        $stmt->bindParam(':amount', $amount, PDO::PARAM_STR);
-        $stmt->bindParam(':note', $note, PDO::PARAM_STR);
+        $stmt->bindParam(':typeID', $typeID);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':desc', $desc);
+        $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            http_response_code(200); // OK
             echo json_encode(["message" => "Expense updated successfully"]);
         } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
+            http_response_code(500);
+            echo json_encode(["error" => $stmt->errorInfo()[2]]);
         }
     } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
     }
 }
 
-function getExpence($data, $conn) {
+function getExpenses($data, $conn) {
     try {
-        $hotelID = isset($data['hotelID']) ? $data['hotelID'] : null;
+        $sql = "SELECT * FROM expenses ORDER BY created_at DESC";
+        $stmt = $conn->query($sql);
+        $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $sql = "SELECT * FROM expence WHERE HotelID = :hotelID";
+        echo json_encode(["expenses" => $expenses]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
+    }
+}
+
+function getExpensesByDate($data, $conn) {
+    try {
+        $from = $data['fromDate'];
+        $to = $data['toDate'];
+
+        $sql = "SELECT * FROM expenses WHERE created_at BETWEEN :from AND :to ORDER BY created_at DESC";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-
+        $stmt->bindParam(':from', $from);
+        $stmt->bindParam(':to', $to);
         $stmt->execute();
+        $expenses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($stmt->rowCount() > 0) {
-            $expences = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(["expences" => $expences]);
-        } else {
-            echo json_encode(["message" => "No expenses found"]);
-            http_response_code(404); // Not Found
-        }
+        echo json_encode(["expenses" => $expenses]);
     } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
     }
 }
 
-function getExpenceDate($data, $conn) {
+function deleteExpense($data, $conn) {
     try {
-        $hotelID = $data['hotelID'];
-        $fromDate = $data['fromDate'];
-        $toDate = $data['toDate'];
+        $id = $data['expense_id'];
 
-        $sql = "SELECT * FROM expence WHERE HotelID = :hotelID AND CreatedDate BETWEEN :fromDate AND :toDate";
+        $sql = "DELETE FROM expenses WHERE expense_id = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':hotelID', $hotelID, PDO::PARAM_INT);
-        $stmt->bindParam(':fromDate', $fromDate, PDO::PARAM_STR);
-        $stmt->bindParam(':toDate', $toDate, PDO::PARAM_STR);
-
-        $stmt->execute();
-
-        if ($stmt->rowCount() > 0) {
-            $expences = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(["expences" => $expences]);
-        } else {
-            echo json_encode(["message" => "No expenses found"]);
-            http_response_code(404); // Not Found
-        }
-    } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
-    }
-}
-
-function deleteExpence($data, $conn) {
-    try {
-        $expID = $data['expID'];
-
-        $sql = "DELETE FROM expence WHERE ExpID = :expID";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':expID', $expID, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            http_response_code(200); // OK
             echo json_encode(["message" => "Expense deleted successfully"]);
         } else {
-            $errorInfo = $stmt->errorInfo();
-            http_response_code(500); // Internal Server Error
-            echo json_encode(["error" => "Error: " . $errorInfo[2]]);
+            http_response_code(500);
+            echo json_encode(["error" => $stmt->errorInfo()[2]]);
         }
     } catch (Exception $e) {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error: " . $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
     }
 }
 ?>

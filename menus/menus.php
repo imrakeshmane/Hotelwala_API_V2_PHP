@@ -100,15 +100,16 @@ function createMenu($conn, $userID, $userType) {
 }
 
 function getMenus($conn, $userID, $userType) {
-    $data = json_decode(file_get_contents('php://input'), true);
+    // $data = json_decode(file_get_contents('php://input'), true);
 
-    if (!isset($data['hotel_id'])) {
+
+    if (!isset($_GET['hotel_id'])) {
         http_response_code(400); // Bad Request
         echo json_encode(["error" => "Hotel ID is required"]);
         return;
     }
 
-    $hotelId = $data['hotel_id'];
+    $hotelId = $_GET['hotel_id'];
 
     // Check if hotel exists and belongs to the user
     $sql = "SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";

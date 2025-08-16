@@ -62,6 +62,9 @@ function takeOrder($conn, $userID, $userType)
   $takenById = $data['taken_by_id'];
   $takenByRole = $data['taken_by_role'];
 
+    // Desired table status when an order is taken
+  $occupiedStatus = 'occupied'; // <-- sets status to "occupied"
+
   // Check if the table exists
   $sql = "SELECT * FROM Tables WHERE table_id = :table_id";
   $stmt = $conn->prepare($sql);
@@ -87,6 +90,7 @@ function takeOrder($conn, $userID, $userType)
                     split_order_data = :order_data,
                     order_data = NULL, -- Clear order_data for split orders
                     total_cost = :total_cost, 
+                      table_status = :table_status,
                     taken_by_id = :taken_by_id, 
                     taken_by_role = :taken_by_role 
                     WHERE table_id = :table_id";
@@ -100,7 +104,8 @@ function takeOrder($conn, $userID, $userType)
     $sql = "UPDATE Tables SET is_split = :is_split, 
                     order_data = :order_data, 
                     split_order_data = NULL, -- Clear split_order_data for normal orders
-                    total_cost = :total_cost, 
+                    total_cost = :total_cost,
+                      table_status = :table_status, 
                     taken_by_id = :taken_by_id, 
                     taken_by_role = :taken_by_role 
                     WHERE table_id = :table_id";
@@ -115,6 +120,7 @@ function takeOrder($conn, $userID, $userType)
     $stmt->bindParam(':order_data', $orderData);
   }
   $stmt->bindParam(':total_cost', $totalCost);
+      $stmt->bindValue(':table_status', $occupiedStatus, PDO::PARAM_STR);
   $stmt->bindParam(':taken_by_id', $takenById);
   $stmt->bindParam(':taken_by_role', $takenByRole);
   $stmt->bindParam(':table_id', $tableId);

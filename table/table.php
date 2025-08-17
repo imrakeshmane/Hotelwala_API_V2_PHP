@@ -46,17 +46,22 @@ switch ($requestMethod) {
 
 
 function getTables($conn, $userID, $userType) {
-    $data = json_decode(file_get_contents('php://input'), true);
+    // Accept hotel_id from GET query or POST JSON body
+    $hotelId = null;
+    if (isset($_GET['hotel_id'])) {
+        $hotelId = $_GET['hotel_id'];
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (isset($data['hotel_id'])) $hotelId = $data['hotel_id'];
+    }
 
-    if (!isset($data['hotel_id'])) {
-        http_response_code(400); // Bad Request
+    if ($hotelId === null) {
+        http_response_code(400);
         echo json_encode(["error" => "Hotel ID is required"]);
         return;
     }
 
-    $hotelId = $data['hotel_id'];
-
-    // Check if the hotel exists and belongs to the user
+    // verify hotel belongs to owner
     $sql = "SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
@@ -64,21 +69,68 @@ function getTables($conn, $userID, $userType) {
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
-        http_response_code(404); // Not Found
+        http_response_code(404);
         echo json_encode(["error" => "Hotel not found or you don't have access"]);
         return;
     }
 
-    // Fetch tables for the given hotel
-    $sql = "SELECT * FROM Tables WHERE category_id IN (SELECT category_id FROM Categories WHERE hotel_id = :hotel_id)";
+    // fetch categories for hotel
+    $sql = "SELECT category_id, category_name, category_table_count, created_at, updated_at 
+            FROM Categories WHERE hotel_id = :hotel_id ORDER BY category_id ASC";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
-    $tables = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    http_response_code(200); // OK
-    echo json_encode(["tables" => $tables]);
+    $resultCategories = [];
+    foreach ($categories as $c) {
+        // fetch tables for this category
+        $sql2 = "SELECT * FROM Tables WHERE category_id = :category_id ORDER BY table_number+0 ASC, table_id ASC";
+        $stmt2 = $conn->prepare($sql2);
+        $stmt2->bindParam(':category_id', $c['category_id']);
+        $stmt2->execute();
+        $tables = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+        // decode JSON fields so client receives objects (not JSON strings)
+        foreach ($tables as &$t) {
+            // Normalize numeric types if needed
+            $t['table_id'] = (int)$t['table_id'];
+            $t['category_id'] = (int)$t['category_id'];
+            $t['total_cost'] = is_null($t['total_cost']) ? 0 : (float)$t['total_cost'];
+            $t['is_split'] = (int)$t['is_split'];
+            $t['taken_by_id'] = is_null($t['taken_by_id']) ? null : (int)$t['taken_by_id'];
+
+            // decode order_data and split_order_data only if not null/empty
+            if (!empty($t['order_data'])) {
+                $decoded = json_decode($t['order_data'], true);
+                $t['order_data'] = ($decoded === null) ? $t['order_data'] : $decoded;
+            } else {
+                $t['order_data'] = null;
+            }
+
+            if (!empty($t['split_order_data'])) {
+                $decoded = json_decode($t['split_order_data'], true);
+                $t['split_order_data'] = ($decoded === null) ? $t['split_order_data'] : $decoded;
+            } else {
+                $t['split_order_data'] = null;
+            }
+        }
+        unset($t);
+
+        $resultCategories[] = [
+            'category_id' => $c['category_id'],
+            'category_name' => $c['category_name'],
+            'category_table_count' => (int)$c['category_table_count'],
+            'tables' => $tables,
+            'created_at' => $c['created_at'],
+            'updated_at' => $c['updated_at'],
+        ];
+    }
+
+    http_response_code(200);
+    echo json_encode(["categories" => $resultCategories]);
 }
+
 
 
 

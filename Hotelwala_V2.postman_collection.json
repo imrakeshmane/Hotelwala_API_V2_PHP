@@ -1001,6 +1001,186 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Order History",
+			"item": [
+				{
+					"name": "get_order_history",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotel_id\": 8\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orderHistory",
+								"orderHistory.php"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get_all_order_history",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "authorization",
+										"value": "{{Authorization}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"hotel_id\": 8\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"orderHistory",
+										"orderHistory.php"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "get_details_order_history",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "authorization",
+										"value": "{{Authorization}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"hotel_id\": 8,\r\n    \"order_history_id\":5\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"orderHistory",
+										"orderHistory.php"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "update_order_history",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"order_history_id\": 123,\r\n  \"payment_status\": \"paid\",\r\n  \"total_cost\": 450,\r\n  \"order_data\": { /* array/object */ }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orderHistory",
+								"orderHistory.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_order_history",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"order_history_id\": 123}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orderHistory",
+								"orderHistory.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {
@@ -1031,13 +1211,11 @@
 	"variable": [
 		{
 			"key": "BASE_URL",
-			"value": "http://localhost:8084/Hotelwala_API_V2_PHP/",
-			"type": "string"
+			"value": "http://localhost:8084/Hotelwala_API_V2_PHP/"
 		},
 		{
 			"key": "Authorization",
-			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTI2Njg4OSwiZXhwIjo1MzU1MjY2ODg5fQ._RGoU8ysppsmrDeofYFZLw1iOBaSl0-noBoZdNsPNqo",
-			"type": "string"
+			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTkyNjgzMywiZXhwIjo1MzU1OTI2ODMzfQ.ctWQsAvrPfjEkwukAtww_LNKQuEonoKk9H0Sh5jNy_0"
 		}
 	]
 }

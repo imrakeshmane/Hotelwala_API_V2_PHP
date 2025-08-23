@@ -1,0 +1,22 @@
+[23-Aug-2025 16:59:24 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 16:59:24 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 16:59:24 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Hotels' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php:76
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php(76): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php(30): createHotel(Object(PDO), '8', 'owner')
+#2 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php on line 76
+[23-Aug-2025 17:00:54 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:00:54 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:00:54 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Hotels' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php:76
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php(76): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php(30): createHotel(Object(PDO), '8', 'owner')
+#2 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/hotel/hotel.php on line 76
+[23-Aug-2025 17:01:57 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:01:57 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:02:19 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:02:19 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:08:48 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:08:48 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ

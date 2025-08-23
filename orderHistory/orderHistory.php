@@ -83,7 +83,7 @@ function getOrderHistory($conn, $userID, $userType) {
     $hotelId = (int)$params['hotel_id'];
 
     // ownership check: ensure the hotel exists and belongs to the owner (only when userType is owner)
-    $sqlCheck = "SELECT hotel_id, owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1";
+    $sqlCheck = "SELECT hotel_id, owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmtCheck = $conn->prepare($sqlCheck);
     $stmtCheck->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmtCheck->execute();
@@ -255,7 +255,7 @@ function updateOrderHistory($conn, $userID, $userType) {
 
     // If user is owner, ensure they own this hotel
     if ($userType === 'owner') {
-        $hchk = $conn->prepare("SELECT owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1");
+        $hchk = $conn->prepare("SELECT owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1");
         $hchk->bindValue(':hotel_id', $recordHotelId, PDO::PARAM_INT);
         $hchk->execute();
         $hrow = $hchk->fetch(PDO::FETCH_ASSOC);
@@ -339,7 +339,7 @@ function deleteOrderHistory($conn, $userID, $userType) {
 
     // If user is owner, ensure they own this hotel
     if ($userType === 'owner') {
-        $hchk = $conn->prepare("SELECT owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1");
+        $hchk = $conn->prepare("SELECT owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1");
         $hchk->bindValue(':hotel_id', $recordHotelId, PDO::PARAM_INT);
         $hchk->execute();
         $hrow = $hchk->fetch(PDO::FETCH_ASSOC);

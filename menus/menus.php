@@ -81,7 +81,7 @@ function createMenu($conn, $userID, $userType) {
     $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
     // ownership check (owner must own the hotel)
-    $sql = "SELECT owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1";
+    $sql = "SELECT owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmt->execute();
@@ -98,7 +98,7 @@ function createMenu($conn, $userID, $userType) {
     }
 
     try {
-        $ins = "INSERT INTO Menus (hotel_id, menu_name, menu_type, menu_price, menu_stock, is_active, created_at, updated_at)
+        $ins = "INSERT INTO menus (hotel_id, menu_name, menu_type, menu_price, menu_stock, is_active, created_at, updated_at)
                 VALUES (:hotel_id, :menu_name, :menu_type, :menu_price, :menu_stock, :is_active, NOW(), NOW())";
         $s = $conn->prepare($ins);
         $s->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
@@ -110,7 +110,7 @@ function createMenu($conn, $userID, $userType) {
         $s->execute();
 
         // return current page (first page) of menus to keep old behavior
-        $fetchSql = "SELECT * FROM Menus WHERE hotel_id = :hotel_id ORDER BY menu_name ASC";
+        $fetchSql = "SELECT * FROM menus WHERE hotel_id = :hotel_id ORDER BY menu_name ASC";
         $fs = $conn->prepare($fetchSql);
         $fs->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
         $fs->execute();
@@ -146,7 +146,7 @@ function getMenus($conn, $userID, $userType) {
     $hotelId = (int)$params['hotel_id'];
 
     // verify hotel exists and owner access if owner
-    $sqlCheck = "SELECT hotel_id, owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1";
+    $sqlCheck = "SELECT hotel_id, owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmtCheck = $conn->prepare($sqlCheck);
     $stmtCheck->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmtCheck->execute();
@@ -165,7 +165,7 @@ function getMenus($conn, $userID, $userType) {
     // single menu detail
     if (isset($params['menu_id'])) {
         $menuId = (int)$params['menu_id'];
-        $sql = "SELECT * FROM Menus WHERE menu_id = :menu_id AND hotel_id = :hotel_id LIMIT 1";
+        $sql = "SELECT * FROM menus WHERE menu_id = :menu_id AND hotel_id = :hotel_id LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->bindValue(':menu_id', $menuId, PDO::PARAM_INT);
         $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
@@ -205,7 +205,7 @@ function getMenus($conn, $userID, $userType) {
 
     try {
         // count total
-        $countSql = "SELECT COUNT(*) AS total FROM Menus WHERE $where";
+        $countSql = "SELECT COUNT(*) AS total FROM menus WHERE $where";
         $cstmt = $conn->prepare($countSql);
         foreach ($binds as $k => $v) {
             // type guess
@@ -217,7 +217,7 @@ function getMenus($conn, $userID, $userType) {
 
         // fetch page
         $sql = "SELECT menu_id, hotel_id, menu_name, menu_type, menu_price, menu_stock, is_active, created_at, updated_at
-                FROM Menus
+                FROM menus
                 WHERE $where
                 ORDER BY menu_name ASC
                 LIMIT :limit OFFSET :offset";
@@ -269,7 +269,7 @@ function updateMenu($conn, $userID, $userType) {
     $hotelId = (int)$data['hotel_id'];
 
     // verify hotel and owner access
-    $sql = "SELECT owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1";
+    $sql = "SELECT owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmt->execute();
@@ -292,7 +292,7 @@ function updateMenu($conn, $userID, $userType) {
     $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
     try {
-        $sql = "UPDATE Menus SET menu_name = :menu_name, menu_type = :menu_type, menu_price = :menu_price, 
+        $sql = "UPDATE menus SET menu_name = :menu_name, menu_type = :menu_type, menu_price = :menu_price, 
                 menu_stock = :menu_stock, is_active = :is_active, updated_at = NOW()
                 WHERE menu_id = :menu_id AND hotel_id = :hotel_id";
         $stmt = $conn->prepare($sql);
@@ -349,7 +349,7 @@ function deleteMenu($conn, $userID, $userType) {
     $hotelId = (int)$data['hotel_id'];
 
     // verify hotel/owner access
-    $sql = "SELECT owner_id FROM Hotels WHERE hotel_id = :hotel_id LIMIT 1";
+    $sql = "SELECT owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
     $stmt->execute();
@@ -366,7 +366,7 @@ function deleteMenu($conn, $userID, $userType) {
     }
 
     try {
-        $sql = "DELETE FROM Menus WHERE menu_id = :menu_id AND hotel_id = :hotel_id";
+        $sql = "DELETE FROM menus WHERE menu_id = :menu_id AND hotel_id = :hotel_id";
         $stmt = $conn->prepare($sql);
         $stmt->bindValue(':menu_id', $menuId, PDO::PARAM_INT);
         $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);

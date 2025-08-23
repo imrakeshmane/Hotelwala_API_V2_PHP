@@ -66,7 +66,7 @@ function takeOrder($conn, $userID, $userType)
   $occupiedStatus = 'occupied'; // <-- sets status to "occupied"
 
   // Check if the table exists
-  $sql = "SELECT * FROM Tables WHERE table_id = :table_id";
+  $sql = "SELECT * FROM tables WHERE table_id = :table_id";
   $stmt = $conn->prepare($sql);
   $stmt->bindParam(':table_id', $tableId);
   $stmt->execute();
@@ -86,7 +86,7 @@ function takeOrder($conn, $userID, $userType)
       return;
     }
     $splitOrderData = json_encode($data['split_order_data']);
-    $sql = "UPDATE Tables SET is_split = :is_split, 
+    $sql = "UPDATE tables SET is_split = :is_split, 
                     split_order_data = :order_data,
                     order_data = NULL, -- Clear order_data for split orders
                     total_cost = :total_cost, 
@@ -101,7 +101,7 @@ function takeOrder($conn, $userID, $userType)
       return;
     }
     $orderData = json_encode($data['order_data']);
-    $sql = "UPDATE Tables SET is_split = :is_split, 
+    $sql = "UPDATE tables SET is_split = :is_split, 
                     order_data = :order_data, 
                     split_order_data = NULL, -- Clear split_order_data for normal orders
                     total_cost = :total_cost,

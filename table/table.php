@@ -62,7 +62,7 @@ function getTables($conn, $userID, $userType) {
     }
 
     // verify hotel belongs to owner
-    $sql = "SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->bindParam(':owner_id', $userID);
@@ -76,7 +76,7 @@ function getTables($conn, $userID, $userType) {
 
     // fetch categories for hotel
     $sql = "SELECT category_id, category_name, category_table_count, created_at, updated_at 
-            FROM Categories WHERE hotel_id = :hotel_id ORDER BY category_id ASC";
+            FROM categories WHERE hotel_id = :hotel_id ORDER BY category_id ASC";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
@@ -85,7 +85,7 @@ function getTables($conn, $userID, $userType) {
     $resultCategories = [];
     foreach ($categories as $c) {
         // fetch tables for this category
-        $sql2 = "SELECT * FROM Tables WHERE category_id = :category_id ORDER BY table_number+0 ASC, table_id ASC";
+        $sql2 = "SELECT * FROM tables WHERE category_id = :category_id ORDER BY table_number+0 ASC, table_id ASC";
         $stmt2 = $conn->prepare($sql2);
         $stmt2->bindParam(':category_id', $c['category_id']);
         $stmt2->execute();
@@ -159,7 +159,7 @@ function createTable($conn, $userID, $userType) {
     $takenByRole = $data['taken_by_role'] ?? null;
 
     // Check if the category exists
-    $sql = "SELECT category_id FROM Categories WHERE category_id = :category_id";
+    $sql = "SELECT category_id FROM categories WHERE category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->execute();
@@ -171,15 +171,15 @@ function createTable($conn, $userID, $userType) {
     }
 
     // Insert the new table
-    $sql = "INSERT INTO Tables (category_id, table_number, table_status, is_split, split_order_data, order_data, taken_by_id, taken_by_role) 
+    $sql = "INSERT INTO tables (category_id, table_number, table_status, is_split, split_order_data, order_data, taken_by_id, taken_by_role) 
             VALUES (:category_id, :table_number, :table_status, :is_split, :split_order_data, :order_data, :taken_by_id, :taken_by_role)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->bindParam(':table_number', $tableNumber);
     $stmt->bindParam(':table_status', $tableStatus);
     $stmt->bindParam(':is_split', $isSplit);
-    $stmt->bindParam(':split_order_data', json_encode($splitOrderData));
-    $stmt->bindParam(':order_data', json_encode($orderData));
+    $stmt->bindValue(':split_order_data', json_encode($splitOrderData));
+    $stmt->bindValue(':order_data', json_encode($orderData));
     $stmt->bindParam(':taken_by_id', $takenById);
     $stmt->bindParam(':taken_by_role', $takenByRole);
 
@@ -220,7 +220,7 @@ function updateTable($conn, $userID, $userType) {
     $takenByRole = $data['taken_by_role'] ?? null;
 
     // Check if the category exists
-    $sql = "SELECT category_id FROM Categories WHERE category_id = :category_id";
+    $sql = "SELECT category_id FROM categories WHERE category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->execute();
@@ -232,7 +232,7 @@ function updateTable($conn, $userID, $userType) {
     }
 
     // Update the table
-    $sql = "UPDATE Tables SET table_number = :table_number, table_status = :table_status, is_split = :is_split, 
+    $sql = "UPDATE tables SET table_number = :table_number, table_status = :table_status, is_split = :is_split, 
             split_order_data = :split_order_data, order_data = :order_data, taken_by_id = :taken_by_id, 
             taken_by_role = :taken_by_role WHERE table_id = :table_id AND category_id = :category_id";
     $stmt = $conn->prepare($sql);
@@ -274,7 +274,7 @@ function deleteTable($conn, $userID, $userType) {
     $categoryId = $data['category_id'];
 
     // Check if the category exists
-    $sql = "SELECT category_id FROM Categories WHERE category_id = :category_id";
+    $sql = "SELECT category_id FROM categories WHERE category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->execute();
@@ -286,7 +286,7 @@ function deleteTable($conn, $userID, $userType) {
     }
 
     // Delete the table
-    $sql = "DELETE FROM Tables WHERE table_id = :table_id AND category_id = :category_id";
+    $sql = "DELETE FROM tables WHERE table_id = :table_id AND category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':table_id', $tableId);
     $stmt->bindParam(':category_id', $categoryId);

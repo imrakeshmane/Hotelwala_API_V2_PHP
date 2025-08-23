@@ -1,0 +1,36 @@
+[23-Aug-2025 17:09:09 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:09:09 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:09:09 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Categories' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php:165
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(165): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(30): createTable(Object(PDO), '8', 'owner')
+#2 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php on line 165
+[23-Aug-2025 17:12:05 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:12:05 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:12:05 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Categories' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php:165
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(165): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(30): createTable(Object(PDO), '8', 'owner')
+#2 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php on line 165
+[23-Aug-2025 17:14:13 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:14:13 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:14:33 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:14:33 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:14:33 UTC] PHP Notice:  Only variables should be passed by reference in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php on line 181
+[23-Aug-2025 17:14:33 UTC] PHP Notice:  Only variables should be passed by reference in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php on line 182
+[23-Aug-2025 17:16:11 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:11 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:11 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '8-A1' for key 'category_id' in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php:186
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(186): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php(30): createTable(Object(PDO), '8', 'owner')
+#2 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/table/table.php on line 186
+[23-Aug-2025 17:16:25 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:25 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:45 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:45 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:52 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ
+[23-Aug-2025 17:16:52 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6IjgiLCJvd25lcl9uYW1lIjoiU0siLCJvd25lcl9lbWFpbCI6InNrQGdtYWlsLmNvbSIsInVzZXJfdHlwZSI6Im93bmVyIiwiaWF0IjoxNzU1OTY4MzEzLCJleHAiOjUzNTU5NjgzMTN9.BxtC8Sw6ZKzQk9OsNtIxA4wN3FrhRuw5iBQxqeRAaQQ

@@ -1,0 +1,20 @@
+[23-Aug-2025 16:34:14 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTI2Njg4OSwiZXhwIjo1MzU1MjY2ODg5fQ._RGoU8ysppsmrDeofYFZLw1iOBaSl0-noBoZdNsPNqo
+[23-Aug-2025 16:34:14 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTI2Njg4OSwiZXhwIjo1MzU1MjY2ODg5fQ._RGoU8ysppsmrDeofYFZLw1iOBaSl0-noBoZdNsPNqo
+[23-Aug-2025 16:34:14 UTC] PHP Warning:  Undefined array key "id" in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php on line 22
+[23-Aug-2025 16:34:14 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'user_id' in 'where clause' in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php:72
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(72): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(83): checkHotelOwnership('9', NULL, Object(PDO))
+#2 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(35): addSetting(Array, NULL, Object(PDO))
+#3 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php on line 72
+[23-Aug-2025 16:36:14 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTI2Njg4OSwiZXhwIjo1MzU1MjY2ODg5fQ._RGoU8ysppsmrDeofYFZLw1iOBaSl0-noBoZdNsPNqo
+[23-Aug-2025 16:36:14 UTC] Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTI2Njg4OSwiZXhwIjo1MzU1MjY2ODg5fQ._RGoU8ysppsmrDeofYFZLw1iOBaSl0-noBoZdNsPNqo
+[23-Aug-2025 16:36:14 UTC] PHP Warning:  Undefined array key "id" in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php on line 22
+[23-Aug-2025 16:36:14 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'user_id' in 'where clause' in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php:72
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(72): PDOStatement->execute()
+#1 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(83): checkHotelOwnership('9', NULL, Object(PDO))
+#2 /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php(35): addSetting(Array, NULL, Object(PDO))
+#3 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/Settings/settings.php on line 72

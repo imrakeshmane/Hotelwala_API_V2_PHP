@@ -1,0 +1,15 @@
+[23-Aug-2025 16:33:46 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Owners' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/auth/login.php:47
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/auth/login.php(47): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/auth/login.php on line 47
+[23-Aug-2025 16:38:57 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Owners' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php:47
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php(47): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php on line 47
+[23-Aug-2025 16:40:11 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'slakeomr_hotelwala_v2.Owners' doesn't exist in /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php:47
+Stack trace:
+#0 /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php(47): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/slakeomr/csdjrathod.com/hotelwala/auth/registration.php on line 47

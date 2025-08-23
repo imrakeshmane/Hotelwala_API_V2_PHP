@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include '../db.php'; // Include your database connection
 
 header('Content-Type: application/json');
@@ -36,7 +40,7 @@ if ($requestMethod == 'POST') {
     $ownerPassword = password_hash($data['owner_password'], PASSWORD_BCRYPT);
 
     // Check if the email or phone number already exists
-    $checkSql = "SELECT * FROM Owners WHERE owner_email = :owner_email OR owner_phone_number = :owner_phone_number";
+    $checkSql = "SELECT * FROM owners WHERE owner_email = :owner_email OR owner_phone_number = :owner_phone_number";
     $stmt = $conn->prepare($checkSql);
     $stmt->bindParam(':owner_email', $ownerEmail);
     $stmt->bindParam(':owner_phone_number', $ownerPhoneNumber);
@@ -49,7 +53,7 @@ if ($requestMethod == 'POST') {
     }
 
     // Insert the new owner
-    $sql = "INSERT INTO Owners (owner_name, owner_email, owner_phone_number, owner_password) 
+    $sql = "INSERT INTO owners (owner_name, owner_email, owner_phone_number, owner_password) 
             VALUES (:owner_name, :owner_email, :owner_phone_number, :owner_password)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':owner_name', $ownerName);

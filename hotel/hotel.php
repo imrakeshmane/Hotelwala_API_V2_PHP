@@ -1,4 +1,5 @@
 <?php
+
 include '../db.php'; // Include your database connection
 include '../validate.php'; // Include the file containing getJWTFromHeader and validateJWT functions
 
@@ -64,7 +65,7 @@ function createHotel($conn, $userID, $userType)
     $pincode = $data['pincode'];
     $hotelMobileNumber = $data['hotel_mobile_number'];
 
-    $sql = "INSERT INTO Hotels (owner_id, hotel_name, hotel_location, pincode, hotel_mobile_number) 
+    $sql = "INSERT INTO hotels (owner_id, hotel_name, hotel_location, pincode, hotel_mobile_number) 
             VALUES (:owner_id, :hotel_name, :hotel_location, :pincode, :hotel_mobile_number)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':owner_id', $userID);
@@ -79,7 +80,7 @@ function createHotel($conn, $userID, $userType)
         $hotelId = $conn->lastInsertId();
 
         // Query the database for the newly created hotel record
-        $sqlSelect = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+        $sqlSelect = "SELECT * FROM hotels WHERE hotel_id = :hotel_id";
         $stmtSelect = $conn->prepare($sqlSelect);
         $stmtSelect->bindParam(':hotel_id', $hotelId);
         $stmtSelect->execute();
@@ -107,7 +108,7 @@ function getHotels($conn, $userID, $userType)
         $hotelId = $_GET['hotel_id'];
 
         if ($userType === 'user') {
-            $sql = "SELECT * FROM Users WHERE user_id = :user_id AND hotel_id = :hotel_id";
+            $sql = "SELECT * FROM users WHERE user_id = :user_id AND hotel_id = :hotel_id";
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(':user_id', $userID);
             $stmt->bindParam(':hotel_id', $hotelId);
@@ -120,7 +121,7 @@ function getHotels($conn, $userID, $userType)
             }
         }
 
-        $sql = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+        $sql = "SELECT * FROM hotels WHERE hotel_id = :hotel_id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':hotel_id', $hotelId);
         $stmt->execute();
@@ -134,7 +135,7 @@ function getHotels($conn, $userID, $userType)
         }
     } else {
         if ($userType === 'owner') {
-            $sql = "SELECT * FROM Hotels WHERE owner_id = :owner_id";
+            $sql = "SELECT * FROM hotels WHERE owner_id = :owner_id";
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(':owner_id', $userID);
             $stmt->execute();
@@ -170,7 +171,7 @@ function updateHotel($conn, $userID, $userType)
     $pincode = $data['pincode'];
     $hotelMobileNumber = $data['hotel_mobile_number'];
 
-    $sql = "UPDATE Hotels 
+    $sql = "UPDATE hotels 
             SET hotel_name = :hotel_name, hotel_location = :hotel_location, pincode = :pincode, hotel_mobile_number = :hotel_mobile_number 
             WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
@@ -208,7 +209,7 @@ function deleteHotel($conn, $userID, $userType)
 
     $hotelId = $data['hotel_id'];
 
-    $sql = "DELETE FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "DELETE FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->bindParam(':owner_id', $userID);

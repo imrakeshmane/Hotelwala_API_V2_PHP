@@ -1,4 +1,4 @@
-<?php
+re<?php
 include '../db.php';
 include '../validate.php';
 
@@ -55,6 +55,10 @@ function payBill($conn, $userID, $userType, $payload) {
         return;
     }
 
+    // Accept any string as payment_status from frontend. Default to 'paid' for backward compatibility.
+    $paymentStatus = isset($data['payment_status']) ? (string)$data['payment_status'] : 'paid';
+    $paymentStatus = trim($paymentStatus);
+
     try {
         // Fetch table joined to categories to get hotel_id (and lock row)
         // Tables doesn't directly store hotel_id in your schema; hotel is reachable via Categories.hotel_id
@@ -89,7 +93,7 @@ function payBill($conn, $userID, $userType, $payload) {
         }
 
         // Make sure hotel_id exists in Hotels table to avoid FK violation
-        $chk = $conn->prepare("SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id");
+        $chk = $conn->prepare("SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id");
         $chk->bindValue(':hotel_id', $hotelIdToUse);
         $chk->execute();
         $hotelRow = $chk->fetch(PDO::FETCH_ASSOC);
@@ -133,13 +137,14 @@ function payBill($conn, $userID, $userType, $payload) {
 
             $insertSql = "INSERT INTO orderhistory
                 (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
-                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, 'paid', :taken_by_id, :taken_by_role, NOW(), NOW())";
+                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
             $insStmt = $conn->prepare($insertSql);
 
             $insStmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
             $insStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
             $insStmt->bindValue(':order_data', $table['order_data'] !== null ? $table['order_data'] : null, PDO::PARAM_STR);
             $insStmt->bindValue(':total_cost', isset($table['total_cost']) ? $table['total_cost'] : null);
+            $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
             $insStmt->bindValue(':taken_by_id', isset($table['taken_by_id']) ? $table['taken_by_id'] : null);
             $insStmt->bindValue(':taken_by_role', isset($table['taken_by_role']) ? $table['taken_by_role'] : null);
 
@@ -226,7 +231,7 @@ function payBill($conn, $userID, $userType, $payload) {
         // Insert this split into OrderHistory
         $insertSql = "INSERT INTO orderhistory
                 (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
-                VALUES (:hotel_id, :table_id, :split_order_id, 1, :order_data, :total_cost, 'paid', :taken_by_id, :taken_by_role, NOW(), NOW())";
+                VALUES (:hotel_id, :table_id, :split_order_id, 1, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
         $insStmt = $conn->prepare($insertSql);
 
         $splitOrderJson = json_encode($foundSplit);
@@ -237,6 +242,7 @@ function payBill($conn, $userID, $userType, $payload) {
         $insStmt->bindValue(':split_order_id', $requestedSplitOrderId);
         $insStmt->bindValue(':order_data', $splitOrderJson, PDO::PARAM_STR);
         $insStmt->bindValue(':total_cost', $splitTotalCost);
+        $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
         $insStmt->bindValue(':taken_by_id', isset($table['taken_by_id']) ? $table['taken_by_id'] : null);
         $insStmt->bindValue(':taken_by_role', isset($table['taken_by_role']) ? $table['taken_by_role'] : null);
 

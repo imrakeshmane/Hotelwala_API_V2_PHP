@@ -59,8 +59,8 @@ function payBill($conn, $userID, $userType, $payload) {
         // Fetch table joined to categories to get hotel_id (and lock row)
         // Tables doesn't directly store hotel_id in your schema; hotel is reachable via Categories.hotel_id
         $sql = "SELECT t.*, c.hotel_id AS category_hotel_id
-                FROM Tables t
-                JOIN Categories c ON t.category_id = c.category_id
+                FROM tables t
+                JOIN categories c ON t.category_id = c.category_id
                 WHERE t.table_id = :table_id
                 FOR UPDATE";
         $stmt = $conn->prepare($sql);
@@ -89,7 +89,7 @@ function payBill($conn, $userID, $userType, $payload) {
         }
 
         // Make sure hotel_id exists in Hotels table to avoid FK violation
-        $chk = $conn->prepare("SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id");
+        $chk = $conn->prepare("SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id");
         $chk->bindValue(':hotel_id', $hotelIdToUse);
         $chk->execute();
         $hotelRow = $chk->fetch(PDO::FETCH_ASSOC);
@@ -131,7 +131,7 @@ function payBill($conn, $userID, $userType, $payload) {
                 }
             }
 
-            $insertSql = "INSERT INTO OrderHistory
+            $insertSql = "INSERT INTO orderhistory
                 (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
                 VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, 'paid', :taken_by_id, :taken_by_role, NOW(), NOW())";
             $insStmt = $conn->prepare($insertSql);
@@ -153,7 +153,7 @@ function payBill($conn, $userID, $userType, $payload) {
             $historyId = $conn->lastInsertId();
 
             // Reset table to defaults
-            $updateSql = "UPDATE Tables SET 
+            $updateSql = "UPDATE tables SET 
                             table_status = 'available',
                             order_data = NULL,
                             split_order_data = NULL,
@@ -224,7 +224,7 @@ function payBill($conn, $userID, $userType, $payload) {
         }
 
         // Insert this split into OrderHistory
-        $insertSql = "INSERT INTO OrderHistory
+        $insertSql = "INSERT INTO orderhistory
                 (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
                 VALUES (:hotel_id, :table_id, :split_order_id, 1, :order_data, :total_cost, 'paid', :taken_by_id, :taken_by_role, NOW(), NOW())";
         $insStmt = $conn->prepare($insertSql);
@@ -254,7 +254,7 @@ function payBill($conn, $userID, $userType, $payload) {
 
         if (count($splitData) === 0) {
             // No more split orders remain - reset table to available
-            $updateSql = "UPDATE Tables SET 
+            $updateSql = "UPDATE tables SET 
                             table_status = 'available',
                             split_order_data = NULL,
                             order_data = NULL,
@@ -301,7 +301,7 @@ function payBill($conn, $userID, $userType, $payload) {
                 }
             }
 
-            $updateSql = "UPDATE Tables SET 
+            $updateSql = "UPDATE tables SET 
                             split_order_data = :split_order_data,
                             total_cost = :total_cost,
                             is_split = 1,

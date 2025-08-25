@@ -66,7 +66,7 @@ function createUser($conn, $userID, $userType) {
     $userPassword = password_hash($data['user_password'], PASSWORD_BCRYPT);
 
     // Check if the hotel exists
-    $sql = "SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->bindParam(':owner_id', $userID);
@@ -79,7 +79,7 @@ function createUser($conn, $userID, $userType) {
     }
 
     // Check if the phone number already exists for another user
-    $sql = "SELECT user_id FROM Users WHERE user_phone_number = :user_phone_number";
+    $sql = "SELECT user_id FROM users WHERE user_phone_number = :user_phone_number";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_phone_number', $userPhoneNumber);
     $stmt->execute();
@@ -91,7 +91,7 @@ function createUser($conn, $userID, $userType) {
     }
 
     // Insert the new user
-    $sql = "INSERT INTO Users (hotel_id, user_name, user_role, user_phone_number, user_password) 
+    $sql = "INSERT INTO users (hotel_id, user_name, user_role, user_phone_number, user_password) 
             VALUES (:hotel_id, :user_name, :user_role, :user_phone_number, :user_password)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
@@ -122,7 +122,7 @@ function getUsers($conn, $userID, $userType) {
     $hotelId = $data['hotel_id'];
 
     // Check if hotel exists and belongs to the owner
-    $sql = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT * FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->bindParam(':owner_id', $userID);
@@ -135,7 +135,7 @@ function getUsers($conn, $userID, $userType) {
     }
 
     // Fetch users for the given hotel
-    $sql = "SELECT * FROM Users WHERE hotel_id = :hotel_id";
+    $sql = "SELECT * FROM users WHERE hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
@@ -167,7 +167,7 @@ function updateUser($conn, $userID, $userType) {
     $userPhoneNumber = $data['user_phone_number'];
 
     // Check if the hotel exists and belongs to the owner
-    $sql = "SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->bindParam(':owner_id', $userID);
@@ -180,7 +180,7 @@ function updateUser($conn, $userID, $userType) {
     }
 
     // Check if the user exists
-    $sql = "SELECT user_id, user_phone_number FROM Users WHERE user_id = :user_id AND hotel_id = :hotel_id";
+    $sql = "SELECT user_id, user_phone_number FROM users WHERE user_id = :user_id AND hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_id', $userId);
     $stmt->bindParam(':hotel_id', $hotelId);
@@ -195,7 +195,7 @@ function updateUser($conn, $userID, $userType) {
     // Check if the phone number is being updated and is already in use by another user
     $existingUser = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($existingUser['user_phone_number'] !== $userPhoneNumber) {
-        $sql = "SELECT user_id FROM Users WHERE user_phone_number = :user_phone_number";
+        $sql = "SELECT user_id FROM users WHERE user_phone_number = :user_phone_number";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':user_phone_number', $userPhoneNumber);
         $stmt->execute();
@@ -208,7 +208,7 @@ function updateUser($conn, $userID, $userType) {
     }
 
     // Update user details
-    $sql = "UPDATE Users SET user_name = :user_name, user_role = :user_role, user_phone_number = :user_phone_number 
+    $sql = "UPDATE users SET user_name = :user_name, user_role = :user_role, user_phone_number = :user_phone_number 
             WHERE user_id = :user_id AND hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_name', $userName);
@@ -245,7 +245,7 @@ function deleteUser($conn, $userID, $userType) {
     $userId = $data['user_id'];
 
     // Check if user exists
-    $sql = "SELECT * FROM Users WHERE user_id = :user_id";
+    $sql = "SELECT * FROM users WHERE user_id = :user_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_id', $userId);
     $stmt->execute();
@@ -257,7 +257,7 @@ function deleteUser($conn, $userID, $userType) {
     }
 
     // Delete user
-    $sql = "DELETE FROM Users WHERE user_id = :user_id";
+    $sql = "DELETE FROM users WHERE user_id = :user_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':user_id', $userId);
 

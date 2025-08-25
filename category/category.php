@@ -65,7 +65,7 @@ function createCategory($conn, $ownerID) {
     $numOfTables = $data['num_of_tables'];
 
     // Check if the hotel belongs to the owner
-    $sql = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT * FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelID);
     $stmt->bindParam(':owner_id', $ownerID);
@@ -76,7 +76,7 @@ function createCategory($conn, $ownerID) {
     }
 
     // Insert the category
-    $sql = "INSERT INTO Categories (hotel_id, category_name, category_table_count) 
+    $sql = "INSERT INTO categories (hotel_id, category_name, category_table_count) 
             VALUES (:hotel_id, :category_name, :num_of_tables)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelID);
@@ -87,7 +87,7 @@ function createCategory($conn, $ownerID) {
         $categoryID = $conn->lastInsertId();
 
         // Insert tables for the category
-        $sqlTable = "INSERT INTO Tables (category_id, table_number) VALUES (:category_id, :table_number)";
+        $sqlTable = "INSERT INTO tables (category_id, table_number) VALUES (:category_id, :table_number)";
         $stmtTable = $conn->prepare($sqlTable);
         for ($i = 1; $i <= $numOfTables; $i++) {
             $tableNumber = $i;
@@ -99,8 +99,8 @@ function createCategory($conn, $ownerID) {
         // Now fetch the newly created category along with its tables using a LEFT JOIN
         $sqlSelect = "SELECT c.category_id, c.category_name, c.category_table_count,
                              t.table_id, t.table_number, t.table_status
-                      FROM Categories c
-                      LEFT JOIN Tables t ON c.category_id = t.category_id
+                      FROM categories c
+                      LEFT JOIN tables t ON c.category_id = t.category_id
                       WHERE c.category_id = :category_id
                       ORDER BY t.table_number";
         $stmtSelect = $conn->prepare($sqlSelect);
@@ -142,7 +142,7 @@ function getCategories($conn, $ownerID) {
     $hotelID = $_GET['hotel_id'];
 
     // Check if the hotel belongs to the owner
-    $sql = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
+    $sql = "SELECT * FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':hotel_id', $hotelID);
     $stmt->bindParam(':owner_id', $ownerID);
@@ -155,8 +155,8 @@ function getCategories($conn, $ownerID) {
     // Fetch categories and their tables
     $sql = "SELECT c.category_id, c.category_name, c.category_table_count, 
                    t.table_id, t.table_number, t.table_status
-            FROM Categories c
-            LEFT JOIN Tables t ON c.category_id = t.category_id
+            FROM categories c
+            LEFT JOIN tables t ON c.category_id = t.category_id
             WHERE c.hotel_id = :hotel_id
             ORDER BY c.category_id, t.table_number";
     $stmt = $conn->prepare($sql);
@@ -198,8 +198,8 @@ function updateCategory($conn, $ownerID) {
 
     // Check if the category belongs to a hotel owned by the owner
     $sql = "SELECT c.category_id 
-            FROM Categories c
-            JOIN Hotels h ON c.hotel_id = h.hotel_id
+            FROM categories c
+            JOIN hotels h ON c.hotel_id = h.hotel_id
             WHERE c.category_id = :category_id AND h.owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryID);
@@ -211,7 +211,7 @@ function updateCategory($conn, $ownerID) {
     }
 
     // Update the category name
-    $sql = "UPDATE Categories SET category_name = :category_name WHERE category_id = :category_id";
+    $sql = "UPDATE categories SET category_name = :category_name WHERE category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_name', $categoryName);
     $stmt->bindParam(':category_id', $categoryID);
@@ -234,8 +234,8 @@ function deleteCategory($conn, $ownerID) {
 
     // Check if the category belongs to a hotel owned by the owner
     $sql = "SELECT c.category_id 
-            FROM Categories c
-            JOIN Hotels h ON c.hotel_id = h.hotel_id
+            FROM categories c
+            JOIN hotels h ON c.hotel_id = h.hotel_id
             WHERE c.category_id = :category_id AND h.owner_id = :owner_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryID);
@@ -247,7 +247,7 @@ function deleteCategory($conn, $ownerID) {
     }
 
     // Delete the category and its associated tables
-    $sql = "DELETE FROM Categories WHERE category_id = :category_id";
+    $sql = "DELETE FROM categories WHERE category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryID);
 

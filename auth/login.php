@@ -41,7 +41,7 @@ if ($requestMethod == 'POST') {
   $password = $data['password'];
 
   // Check in Owners table
-  $sqlOwner = "SELECT * FROM Owners WHERE owner_phone_number = :phone_number";
+  $sqlOwner = "SELECT * FROM owners WHERE owner_phone_number = :phone_number";
   $stmt = $conn->prepare($sqlOwner);
   $stmt->bindParam(':phone_number', $phoneNumber);
   $stmt->execute();
@@ -60,7 +60,7 @@ if ($requestMethod == 'POST') {
       $jwt = generateJWT($payload);
 
       // Fetch hotels owned by the owner
-      $sqlHotels = "SELECT * FROM Hotels WHERE owner_id = :owner_id";
+      $sqlHotels = "SELECT * FROM hotels WHERE owner_id = :owner_id";
       $stmtHotels = $conn->prepare($sqlHotels);
       $stmtHotels->bindParam(':owner_id', $owner['owner_id']);
       $stmtHotels->execute();
@@ -68,14 +68,14 @@ if ($requestMethod == 'POST') {
 
       // Populate hotel data with categories and tables
       foreach ($hotels as &$hotel) {
-        $sqlCategories = "SELECT * FROM Categories WHERE hotel_id = :hotel_id";
+        $sqlCategories = "SELECT * FROM categories WHERE hotel_id = :hotel_id";
         $stmtCategories = $conn->prepare($sqlCategories);
         $stmtCategories->bindParam(':hotel_id', $hotel['hotel_id']);
         $stmtCategories->execute();
         $categories = $stmtCategories->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($categories as &$category) {
-          $sqlTables = "SELECT * FROM Tables WHERE category_id = :category_id  ORDER BY CAST(table_number AS UNSIGNED) ASC";
+          $sqlTables = "SELECT * FROM tables WHERE category_id = :category_id  ORDER BY CAST(table_number AS UNSIGNED) ASC";
           $stmtTables = $conn->prepare($sqlTables);
           $stmtTables->bindParam(':category_id', $category['category_id']);
           $stmtTables->execute();
@@ -108,7 +108,7 @@ if ($requestMethod == 'POST') {
   }
 
   // Check in Users table
-  $sqlUser = "SELECT * FROM Users WHERE user_phone_number = :phone_number";
+  $sqlUser = "SELECT * FROM users WHERE user_phone_number = :phone_number";
   $stmt = $conn->prepare($sqlUser);
   $stmt->bindParam(':phone_number', $phoneNumber);
   $stmt->execute();
@@ -127,21 +127,21 @@ if ($requestMethod == 'POST') {
       $jwt = generateJWT($payload);
 
       // Fetch user's hotel
-      $sqlHotel = "SELECT * FROM Hotels WHERE hotel_id = :hotel_id";
+      $sqlHotel = "SELECT * FROM hotels WHERE hotel_id = :hotel_id";
       $stmtHotel = $conn->prepare($sqlHotel);
       $stmtHotel->bindParam(':hotel_id', $user['hotel_id']);
       $stmtHotel->execute();
       $hotel = $stmtHotel->fetch(PDO::FETCH_ASSOC);
 
       if ($hotel) {
-        $sqlCategories = "SELECT * FROM Categories WHERE hotel_id = :hotel_id";
+        $sqlCategories = "SELECT * FROM categories WHERE hotel_id = :hotel_id";
         $stmtCategories = $conn->prepare($sqlCategories);
         $stmtCategories->bindParam(':hotel_id', $hotel['hotel_id']);
         $stmtCategories->execute();
         $categories = $stmtCategories->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($categories as &$category) {
-          $sqlTables = "SELECT * FROM Tables WHERE category_id = :category_id";
+          $sqlTables = "SELECT * FROM tables WHERE category_id = :category_id";
           $stmtTables = $conn->prepare($sqlTables);
           $stmtTables->bindParam(':category_id', $category['category_id']);
           $stmtTables->execute();

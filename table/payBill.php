@@ -1,4 +1,4 @@
-re<?php
+<?php
 include '../db.php';
 include '../validate.php';
 
@@ -93,7 +93,7 @@ function payBill($conn, $userID, $userType, $payload) {
         }
 
         // Make sure hotel_id exists in Hotels table to avoid FK violation
-        $chk = $conn->prepare("SELECT hotel_id FROM Hotels WHERE hotel_id = :hotel_id");
+        $chk = $conn->prepare("SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id");
         $chk->bindValue(':hotel_id', $hotelIdToUse);
         $chk->execute();
         $hotelRow = $chk->fetch(PDO::FETCH_ASSOC);

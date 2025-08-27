@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HotelWala - Hotel Management App</title>
+  <style>
+    :root {
+      --background-color: #F1F1F1;
+      --white: #FFFFFF;
+      --base-100: #D6D6D6;
+      --base-200: #9B9A9B;
+      --base-300: #3D3D3D;
+      --base-400: #161616;
+      --base-500: #000000;
+
+      --primary: #E5813A;
+      --primary-light: #ece1f2;
+      --primary-sky: #7BC5D4;
+      --primary-blue: #020052;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--background-color);
+      color: var(--base-400);
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: var(--primary-blue);
+    }
+
+    nav a {
+      margin: 0 12px;
+      text-decoration: none;
+      color: var(--primary-blue);
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      color: var(--primary);
+    }
+
+    /* Hero Image */
+    .hero {
+      text-align: center;
+      background: var(--white);
+      padding: 20px;
+      border-bottom: 1px solid var(--base-100);
+    }
+
+    .hero img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .hero h2 {
+      color: var(--primary);
+      margin-top: 15px;
+      font-size: 2rem;
+    }
+
+    /* About Section */
+    .about {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: var(--white);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    .about h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    /* Features Section */
+    .features {
+      max-width: 1100px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      padding: 0 15px;
+    }
+
+    .feature {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .feature h3 {
+      color: var(--primary-blue);
+      margin-bottom: 10px;
+    }
+
+    .feature p {
+      font-size: 0.95rem;
+    }
+
+    /* Download Button */
+    .download-section {
+      text-align: center;
+      margin: 30px auto;
+    }
+
+    .download-btn img {
+      width: 180px;
+      margin-top: 10px;
+    }
+
+    footer {
+      text-align: center;
+      background: var(--white);
+      padding: 20px;
+      margin-top: 30px;
+      border-top: 1px solid var(--base-100);
+      font-size: 0.9rem;
+      color: var(--base-200);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+      .hero img {
+        max-height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>HotelWala</h1>
+  <nav>
+    <a href="#">Home</a>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="#features">Features</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+  <img src="https://via.placeholder.com/1200x400/E5813A/FFFFFF?text=Hotel+Management+Made+Easy" alt="HotelWala">
+  <h2>Smart Hotel Table Management App</h2>
+</section>
+
+<!-- About Section -->
+<section class="about">
+  <h2>About HotelWala</h2>
+  <p>
+    HotelWala is a lightweight hotel and restaurant management app designed to make table and service handling simple and efficient. 
+    No bookings, no payment gateways, no location tracking—just a clean and easy-to-use solution for hotels and restaurants.
+  </p>
+  <p>
+    Developed by <strong>WorldTechWala Developers</strong>, this app helps staff manage tables, track orders, and generate bills 
+    without complicated features or unnecessary permissions.
+  </p>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features">
+  <div class="feature">
+    <h3>✔ Easy Table Management</h3>
+    <p>Organize tables and assign customers with a few clicks.</p>
+  </div>
+  <div class="feature">
+    <h3>✔ Fast Billing</h3>
+    <p>Generate accurate bills quickly with minimal steps.</p>
+  </div>
+  <div class="feature">
+    <h3>✔ Order Tracking</h3>
+    <p>Track pending and completed orders in real-time.</p>
+  </div>
+  <div class="feature">
+    <h3>✔ No Extra Permissions</h3>
+    <p>No camera, storage, location, or payment integrations needed.</p>
+  </div>
+  <div class="feature">
+    <h3>✔ Simple & Secure</h3>
+    <p>Privacy-focused app with zero data sharing and minimal resources.</p>
+  </div>
+  <div class="feature">
+    <h3>✔ Works Offline</h3>
+    <p>No internet dependency—manage everything offline.</p>
+  </div>
+</section>
+
+<!-- Download Section -->
+<section class="download-section">
+  <h2>Get the App</h2>
+  <p>Available soon on Google Play Store</p>
+  <a class="download-btn" href="#">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Download on Play Store">
+  </a>
+</section>
+
+<!-- Footer -->
+<footer id="contact">
+  © <span id="year"></span> WorldTechWala Developers | Email: <a href="mailto:worldtechwala@gmail.com">worldtechwala@gmail.com</a>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>

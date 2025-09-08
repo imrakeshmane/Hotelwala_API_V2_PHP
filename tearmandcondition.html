@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms & Conditions - HotelWala</title>
+  <style>
+    :root {
+      --background-color: #F1F1F1;
+      --white: #FFFFFF;
+      --base-100: #D6D6D6;
+      --base-200: #9B9A9B;
+      --base-300: #3D3D3D;
+      --base-400: #161616;
+      --base-500: #000000;
+
+      --primary: #E5813A;
+      --primary-light: #ece1f2;
+      --primary-sky: #7BC5D4;
+      --primary-blue: #020052;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--background-color);
+      color: var(--base-400);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 2px solid var(--primary);
+      padding: 25px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: var(--primary-blue);
+    }
+
+    .container {
+      max-width: 900px;
+      background: var(--white);
+      margin: 30px auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: var(--primary);
+    }
+
+    p, ul {
+      margin-bottom: 15px;
+      color: var(--base-300);
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      margin-top: 30px;
+      border-top: 1px solid var(--base-100);
+      font-size: 0.9rem;
+      color: var(--base-200);
+    }
+
+    a {
+      color: var(--primary-blue);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>HotelWala - Terms & Conditions</h1>
+  </header>
+
+  <div class="container">
+    <p><strong>Last Updated:</strong> August 27, 2025</p>
+    <p>
+      Welcome to <strong>HotelWala</strong>, developed by <strong>WorldTechWala Developers</strong>. By using our app, you agree to the following terms and conditions. Please read them carefully before using the app.
+    </p>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>
+      By downloading or using HotelWala, you agree to comply with these terms and conditions. If you do not agree, you must not use the app.
+    </p>
+
+    <h2>2. Use of the App</h2>
+    <p>
+      HotelWala is designed to manage hotel tables and their services efficiently. The app does not support online bookings, payment transactions, or mapping services. You agree to:
+    </p>
+    <ul>
+      <li>Use the app for lawful purposes only.</li>
+      <li>Not attempt to reverse-engineer, modify, or distribute the app’s code.</li>
+      <li>Not use the app in a way that disrupts its functionality or services.</li>
+    </ul>
+
+    <h2>3. No Warranties</h2>
+    <p>
+      HotelWala is provided “as is” without any guarantees of accuracy, reliability, or availability. While we strive for a seamless experience, we cannot guarantee uninterrupted or error-free performance.
+    </p>
+
+    <h2>4. Limitations of Liability</h2>
+    <p>
+      WorldTechWala Developers shall not be held responsible for any losses, damages, or issues arising from the use of this app, including but not limited to:
+    </p>
+    <ul>
+      <li>Data loss due to device issues or user error.</li>
+      <li>Operational downtime caused by technical maintenance.</li>
+    </ul>
+
+    <h2>5. Privacy & Data</h2>
+    <p>
+      We value your privacy. Please refer to our <a href="privacy-policy.html">Privacy Policy</a> to understand how we handle your data.
+    </p>
+
+    <h2>6. Updates and Changes</h2>
+    <p>
+      We may update the app or these terms at any time without prior notice. Continued use of the app after updates constitutes acceptance of the revised terms.
+    </p>
+
+    <h2>7. Contact Us</h2>
+    <p>
+      For any questions regarding these Terms & Conditions, please contact us at:
+    </p>
+    <p>
+      <strong>WorldTechWala Developers</strong><br />
+      Email: <a href="mailto:worldtechwala@gmail.com">worldtechwala@gmail.com</a>
+    </p>
+  </div>
+
+  <footer>
+    © <span id="year"></span> WorldTechWala Developers. All rights reserved.
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

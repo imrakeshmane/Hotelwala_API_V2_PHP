@@ -21,6 +21,20 @@ if (isset($payload['error'])) {
     return;
 }
 
+
+/* helper: read params from GET or JSON body (body takes precedence) */
+function readParams() {
+    $params = $_GET ?? [];
+    $raw = file_get_contents('php://input');
+    $body = json_decode($raw, true);
+    if (is_array($body)) {
+        $params = array_merge($params, $body); // body overrides query string
+    }
+    return $params;
+}
+
+
+
 // Extract user ID and user type from the JWT payload
 $userID = $payload['owner_id'];
 $userType = $payload['user_type'];

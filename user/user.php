@@ -112,14 +112,17 @@ function createUser($conn, $userID, $userType) {
 
 
 function getUsers($conn, $userID, $userType) {
-    $data = json_decode(file_get_contents('php://input'), true);
-    if (!isset($data['hotel_id'])) {
+    // $data = json_decode(file_get_contents('php://input'), true);
+  $params = readParams();
+
+
+    if (!isset($params['hotel_id'])) {
         http_response_code(400); // Bad Request
         echo json_encode(["error" => "Hotel ID is required"]);
         return;
     }
 
-    $hotelId = $data['hotel_id'];
+    $hotelId = $params['hotel_id'];
 
     // Check if hotel exists and belongs to the owner
     $sql = "SELECT * FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";
@@ -152,19 +155,19 @@ function updateUser($conn, $userID, $userType) {
         return;
     }
 
-    $data = json_decode(file_get_contents('php://input'), true);
+    $params = json_decode(file_get_contents('php://input'), true);
 
-    if (!isset($data['user_id'], $data['hotel_id'], $data['user_name'], $data['user_role'], $data['user_phone_number'])) {
+    if (!isset($params['user_id'], $params['hotel_id'], $params['user_name'], $params['user_role'], $params['user_phone_number'])) {
         http_response_code(400); // Bad Request
         echo json_encode(["error" => "Missing required fields"]);
         return;
     }
 
-    $userId = $data['user_id'];
-    $hotelId = $data['hotel_id'];
-    $userName = $data['user_name'];
-    $userRole = $data['user_role'];
-    $userPhoneNumber = $data['user_phone_number'];
+    $userId = $params['user_id'];
+    $hotelId = $params['hotel_id'];
+    $userName = $params['user_name'];
+    $userRole = $params['user_role'];
+    $userPhoneNumber = $params['user_phone_number'];
 
     // Check if the hotel exists and belongs to the owner
     $sql = "SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :owner_id";

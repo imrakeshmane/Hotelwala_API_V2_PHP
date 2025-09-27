@@ -48,6 +48,8 @@ function readParams() {
 }
 
 switch ($requestMethod) {
+      case 'POST':
+        createOrderHistory($conn, $userID, $userType);
     case 'GET':
         getOrderHistory($conn, $userID, $userType);
         break;
@@ -59,9 +61,236 @@ switch ($requestMethod) {
         break;
     default:
         http_response_code(405);
-        echo json_encode(["error" => "Method not allowed. Use GET/PUT/DELETE."]);
+        echo json_encode(["error" => "Method not allowed. Use GET/POST/PUT/DELETE."]);
         break;
 }
+
+
+
+
+/* ---------------------------
+   POST - create order history (bill-first flow)
+   Body JSON:
+   {
+     "table_id": 12,
+     "payment_status": "online"|"cash"|...,
+     "order_data": { "orders":[...], "total_cost":..., "cgst_percentage":..., "sgst_percentage":..., "final_amount":... },
+     "taken_by_id": ..., "taken_by_role": ...
+   }
+*/
+function createOrderHistory($conn, $userID, $userType) {
+    global $payload;
+
+    // owners and users are allowed to create (same as payBill/addOrderHistory)
+    if ($userType !== 'owner' && $userType !== 'user') {
+        http_response_code(403);
+        echo json_encode(["error" => "Only owners or users can create order history (bill-first)"]);
+        return;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($data)) {
+        http_response_code(400);
+        echo json_encode(["error" => "Invalid JSON body"]);
+        return;
+    }
+
+    if (!isset($data['table_id'])) {
+        http_response_code(400);
+        echo json_encode(["error" => "table_id is required"]);
+        return;
+    }
+
+    if (!isset($data['order_data']) || !is_array($data['order_data'])) {
+        http_response_code(400);
+        echo json_encode(["error" => "order_data (object) is required for bill-first flow"]);
+        return;
+    }
+
+    $tableId = (int)$data['table_id'];
+    $orderData = $data['order_data'];
+    $paymentStatus = isset($data['payment_status']) ? trim((string)$data['payment_status']) : 'paid';
+    $takenById = $data['taken_by_id'] ?? ($userID ?? null);
+    $takenByRole = $data['taken_by_role'] ?? ($userType ?? null);
+
+    $cgstPct = isset($data['cgst_percentage']) ? floatval($data['cgst_percentage']) : null;
+    $sgstPct = isset($data['sgst_percentage']) ? floatval($data['sgst_percentage']) : null;
+    $clientTotalCost = isset($data['total_cost']) ? floatval($data['total_cost']) : null;
+    $clientFinalAmount = isset($data['final_amount']) ? floatval($data['final_amount']) : null;
+
+    try {
+        // Lock table and get category hotel id (same as payBill)
+        $sql = "SELECT t.*, c.hotel_id AS category_hotel_id
+                FROM tables t
+                JOIN categories c ON t.category_id = c.category_id
+                WHERE t.table_id = :table_id
+                FOR UPDATE";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
+        $stmt->execute();
+        $table = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$table) {
+            http_response_code(404);
+            echo json_encode(["error" => "Table not found"]);
+            return;
+        }
+
+        // resolve hotel_id
+        $hotelIdFromToken = $payload['hotel_id'] ?? ($payload['hotelId'] ?? null);
+        $hotelIdToUse = $hotelIdFromToken ?? ($table['category_hotel_id'] ?? null);
+        $usedFallbackToUserId = false;
+        if (empty($hotelIdToUse)) {
+            $hotelIdToUse = $userID;
+            $usedFallbackToUserId = true;
+        }
+
+        // validate hotel exists
+        $chk = $conn->prepare("SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id");
+        $chk->bindValue(':hotel_id', $hotelIdToUse);
+        $chk->execute();
+        $hotelRow = $chk->fetch(PDO::FETCH_ASSOC);
+        if (!$hotelRow) {
+            http_response_code(400);
+            echo json_encode(["error" => "Invalid hotel_id", "message" => "Resolved hotel_id does not exist"]);
+            return;
+        }
+
+        // compute totals from order_data if not provided
+        $ordersList = [];
+        if (isset($orderData['orders']) && is_array($orderData['orders'])) {
+            $ordersList = $orderData['orders'];
+        } elseif (isset($orderData['items']) && is_array($orderData['items'])) {
+            $ordersList = $orderData['items'];
+        } elseif (is_array($orderData)) {
+            $ordersList = $orderData['orders'] ?? $orderData;
+        }
+
+        $calcTotal = 0.0;
+        foreach ($ordersList as $it) {
+            $qty = isset($it['quantity']) ? floatval($it['quantity']) : 1.0;
+            $price = 0.0;
+            if (isset($it['price'])) $price = floatval($it['price']);
+            elseif (isset($it['menu_price'])) $price = floatval($it['menu_price']);
+            $calcTotal += ($price * $qty);
+        }
+        $baseTotal = $clientTotalCost !== null ? $clientTotalCost : $calcTotal;
+
+        // GST: prefer passed values; otherwise read from settings table for this hotel
+        if ($cgstPct === null || $sgstPct === null) {
+            $sstmt = $conn->prepare("SELECT gst_enabled, cgst_percentage, sgst_percentage FROM settings WHERE hotel_id = :hotel_id LIMIT 1");
+            $sstmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
+            $sstmt->execute();
+            $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+            if ($srow) {
+                if ($cgstPct === null) $cgstPct = floatval($srow['cgst_percentage'] ?? 0);
+                if ($sgstPct === null) $sgstPct = floatval($srow['sgst_percentage'] ?? 0);
+                if ((int)($srow['gst_enabled'] ?? 0) !== 1) {
+                    $cgstPct = 0.0;
+                    $sgstPct = 0.0;
+                }
+            } else {
+                if ($cgstPct === null) $cgstPct = 0.0;
+                if ($sgstPct === null) $sgstPct = 0.0;
+            }
+        }
+
+        $gstRate = (($cgstPct ?? 0.0) + ($sgstPct ?? 0.0)) / 100.0;
+        $gstAmount = round($baseTotal * $gstRate, 2);
+        $finalAmount = $clientFinalAmount !== null ? $clientFinalAmount : round($baseTotal + $gstAmount, 2);
+
+        if ($clientFinalAmount !== null && abs($clientFinalAmount - $finalAmount) > 0.5) {
+            http_response_code(400);
+            echo json_encode([
+                "error" => "final_amount_mismatch",
+                "message" => "Client final_amount doesn't match server calculation. Provided: {$clientFinalAmount}, Calculated: {$finalAmount}"
+            ]);
+            return;
+        }
+
+        $conn->beginTransaction();
+
+        $orderJson = is_string($orderData) ? $orderData : json_encode($orderData);
+
+        // Insert into orderhistory table
+        $insertSql = "INSERT INTO orderhistory
+                (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
+                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
+        $insStmt = $conn->prepare($insertSql);
+        $insStmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
+        $insStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
+        $insStmt->bindValue(':order_data', $orderJson, PDO::PARAM_STR);
+        $insStmt->bindValue(':total_cost', $finalAmount);
+        $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
+        $insStmt->bindValue(':taken_by_id', $takenById !== null ? $takenById : null);
+        $insStmt->bindValue(':taken_by_role', $takenByRole !== null ? $takenByRole : null);
+
+        if (!$insStmt->execute()) {
+            $conn->rollBack();
+            $err = $insStmt->errorInfo();
+            http_response_code(500);
+            echo json_encode(["error" => "Error inserting order history", "db_error" => $err]);
+            return;
+        }
+        $historyId = $conn->lastInsertId();
+
+        // Reset table to available (bill-first)
+        $updateSql = "UPDATE tables SET 
+                        table_status = 'available',
+                        order_data = NULL,
+                        split_order_data = NULL,
+                        is_split = 0,
+                        total_cost = NULL,
+                        taken_by_id = NULL,
+                        taken_by_role = NULL,
+                        updated_at = NOW()
+                      WHERE table_id = :table_id";
+        $updStmt = $conn->prepare($updateSql);
+        $updStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
+        if (!$updStmt->execute()) {
+            $conn->rollBack();
+            $err = $updStmt->errorInfo();
+            http_response_code(500);
+            echo json_encode(["error" => "Error resetting table after creating order history", "db_error" => $err]);
+            return;
+        }
+
+        $conn->commit();
+
+        $resp = [
+            "message" => "Bill-first order recorded and payment processed",
+            "order_history_id" => $historyId,
+            "table_status" => "available",
+            "charged_amount" => $finalAmount,
+            "cgst_percentage" => $cgstPct,
+            "sgst_percentage" => $sgstPct,
+            "gst_amount" => $gstAmount,
+        ];
+        if ($usedFallbackToUserId) {
+            $resp['warning'] = "hotel_id was not present in token or categories; used owner_id as fallback.";
+        }
+        http_response_code(201);
+        echo json_encode($resp);
+        return;
+
+    } catch (PDOException $e) {
+        if ($conn->inTransaction()) $conn->rollBack();
+        http_response_code(500);
+        echo json_encode(["error" => "Database error", "message" => $e->getMessage()]);
+        return;
+    } catch (Exception $e) {
+        if ($conn->inTransaction()) $conn->rollBack();
+        http_response_code(500);
+        echo json_encode(["error" => "Server error", "message" => $e->getMessage()]);
+        return;
+    }
+}
+
+
+
+
+
+
 
 /* ---------------------------
    GET - list or detail

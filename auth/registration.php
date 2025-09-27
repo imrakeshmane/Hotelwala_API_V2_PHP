@@ -145,7 +145,7 @@ try {
         'owner_email' => $ownerEmail,
         'user_type' => 'owner',
         'iat' => time(),
-        'exp' => time() + 36000000000
+        'exp' => time() +  15552000
     ];
     $jwt = generateJWT($payload);
 

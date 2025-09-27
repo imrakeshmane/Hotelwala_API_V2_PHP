@@ -89,7 +89,7 @@ try {
             "owner_email" => $owner['owner_email'],
             "user_type" => "owner",
             "iat" => time(),
-            "exp" => time() + 3600
+            "exp" => time() +  15552000
         ];
         $jwt = generateJWT($payload);
 

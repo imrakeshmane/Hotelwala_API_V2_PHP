@@ -311,7 +311,7 @@ function getOrderHistory($conn, $userID, $userType) {
     }
     $hotelId = (int)$params['hotel_id'];
 
-    // ownership check: ensure the hotel exists and belongs to the owner (only when userType is owner)
+    // ownership check (unchanged)
     $sqlCheck = "SELECT hotel_id, owner_id FROM hotels WHERE hotel_id = :hotel_id LIMIT 1";
     $stmtCheck = $conn->prepare($sqlCheck);
     $stmtCheck->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
@@ -322,13 +322,49 @@ function getOrderHistory($conn, $userID, $userType) {
         echo json_encode(["error" => "Hotel not found"]);
         return;
     }
-    // If user is owner, ensure they own the hotel
     if ($userType === 'owner' && (int)$hotelRow['owner_id'] !== (int)$userID) {
         http_response_code(403);
         echo json_encode(["error" => "You don't have access to this hotel's data"]);
         return;
     }
-    // If you want to restrict managers to specific hotels, add that check here (requires mapping table)
+
+    // Optional filters
+    $fromDateRaw = isset($params['from_date']) ? trim((string)$params['from_date']) : null;
+    $toDateRaw = isset($params['to_date']) ? trim((string)$params['to_date']) : null;
+    $paymentStatus = isset($params['payment_status']) ? trim((string)$params['payment_status']) : null;
+    $tableIdFilter = isset($params['table_id']) ? (int)$params['table_id'] : null;
+
+    // Normalize/validate dates: allow 'YYYY-MM-DD' or full ISO; produce SQL datetimes
+    $fromDate = null;
+    $toDate = null;
+    if (!empty($fromDateRaw)) {
+        // try Y-m-d
+        $d = DateTime::createFromFormat('Y-m-d', $fromDateRaw);
+        if ($d === false) {
+            // try generic parse
+            try { $d = new DateTime($fromDateRaw); } catch (Exception $e) { $d = false; }
+        }
+        if ($d !== false) $fromDate = $d->format('Y-m-d 00:00:00');
+        else {
+            http_response_code(400);
+            echo json_encode(["error" => "Invalid from_date. Use YYYY-MM-DD or ISO datetime."]);
+            return;
+        }
+    }
+    if (!empty($toDateRaw)) {
+        $d = DateTime::createFromFormat('Y-m-d', $toDateRaw);
+        if ($d === false) {
+            try { $d = new DateTime($toDateRaw); } catch (Exception $e) { $d = false; }
+        }
+        if ($d !== false) {
+            // to_date inclusive -> set to end of day if date-only provided
+            $toDate = $d->format('Y-m-d') . ' 23:59:59';
+        } else {
+            http_response_code(400);
+            echo json_encode(["error" => "Invalid to_date. Use YYYY-MM-DD or ISO datetime."]);
+            return;
+        }
+    }
 
     // If detail requested
     if (isset($params['order_history_id'])) {
@@ -373,36 +409,60 @@ function getOrderHistory($conn, $userID, $userType) {
         return;
     }
 
-    // list: pagination
+    // list: pagination (same defaults)
     $page = isset($params['page']) ? max(1, (int)$params['page']) : 1;
     $perPage = isset($params['per_page']) ? min(100, max(1, (int)$params['per_page'])) : 10;
     $offset = ($page - 1) * $perPage;
 
-    // total count for this hotel (fast if indexed)
     try {
-        $countSql = "SELECT COUNT(*) AS total FROM orderhistory WHERE hotel_id = :hotel_id";
+        // Build WHERE with optional filters (safe prepared params)
+        $where = "WHERE oh.hotel_id = :hotel_id";
+        $binds = [':hotel_id' => $hotelId];
+
+        if ($fromDate !== null) {
+            $where .= " AND oh.created_at >= :from_date";
+            $binds[':from_date'] = $fromDate;
+        }
+        if ($toDate !== null) {
+            $where .= " AND oh.created_at <= :to_date";
+            $binds[':to_date'] = $toDate;
+        }
+        if (!empty($paymentStatus)) {
+            $where .= " AND oh.payment_status = :payment_status";
+            $binds[':payment_status'] = $paymentStatus;
+        }
+        if (!empty($tableIdFilter)) {
+            $where .= " AND oh.table_id = :table_id";
+            $binds[':table_id'] = $tableIdFilter;
+        }
+
+        // count
+        $countSql = "SELECT COUNT(*) AS total FROM orderhistory oh $where";
         $cstmt = $conn->prepare($countSql);
-        $cstmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
+        foreach ($binds as $k => $v) $cstmt->bindValue($k, $v);
         $cstmt->execute();
         $totalRow = $cstmt->fetch(PDO::FETCH_ASSOC);
         $totalCount = (int)($totalRow['total'] ?? 0);
 
-        // fetch page rows
+        // fetch rows
         $sql = "SELECT oh.order_history_id, oh.hotel_id, oh.table_id, t.table_number, oh.is_split, oh.split_order_id,
                        oh.total_cost, oh.payment_status, oh.created_at, oh.updated_at, oh.order_data
                 FROM orderhistory oh
                 LEFT JOIN tables t ON oh.table_id = t.table_id
-                WHERE oh.hotel_id = :hotel_id
+                $where
                 ORDER BY oh.created_at DESC
                 LIMIT :limit OFFSET :offset";
         $stmt = $conn->prepare($sql);
-        $stmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
+        // bind dynamic first
+        foreach ($binds as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // build lightweight list
+        // build lightweight list (unchanged)
         $items = [];
         foreach ($rows as $r) {
             $first_item = null;
@@ -442,12 +502,14 @@ function getOrderHistory($conn, $userID, $userType) {
             "per_page" => $perPage,
         ]);
         return;
+
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => "Database error", "message" => $e->getMessage()]);
         return;
     }
 }
+
 
 /* ---------------------------
    PUT - update order history (owner/manager only)
@@ -595,4 +657,5 @@ function deleteOrderHistory($conn, $userID, $userType) {
         echo json_encode(["error" => "Database error", "message" => $e->getMessage()]);
     }
 }
+
 ?>

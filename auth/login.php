@@ -181,7 +181,7 @@ try {
             "user_name" => $user['user_name'],
             "user_role" => $user['user_role'],
             "token" => $jwt,
-            "hotels" => $hotel ? $hotel : (object)[] // return object for consistency
+            "hotels" => $hotel ? [$hotel] : (object)[] // return object for consistency
         ], 200);
     }
 

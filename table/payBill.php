@@ -13,7 +13,7 @@ if ($jwt === null) {
     return;
 }
 
-// Validate the JWT token
+// Validate token
 $payload = validateJWT($jwt, $GLOBALS['secretKey']);
 if (isset($payload['error'])) {
     http_response_code(401);
@@ -21,14 +21,28 @@ if (isset($payload['error'])) {
     return;
 }
 
-$userID = $payload['owner_id'] ?? null;
+// support tokens that may use owner_id or user_id
+$userID = $payload['user_id'] ?? $payload['owner_id'] ?? null;
 $userType = $payload['user_type'] ?? null;
 
-if ($requestMethod === 'POST') {
-    payBill($conn, $userID, $userType, $payload);
-} else {
+if ($requestMethod !== 'POST') {
     http_response_code(405);
     echo json_encode(["error" => "Method not allowed"]);
+    return;
+}
+
+function safe_float($v) {
+    if (!isset($v)) return 0.0;
+    if (!is_numeric($v)) return 0.0;
+    return floatval($v);
+}
+
+try {
+    payBill($conn, $userID, $userType, $payload);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["error" => "Server error", "message" => $e->getMessage()]);
+    return;
 }
 
 function payBill($conn, $userID, $userType, $payload) {
@@ -55,13 +69,12 @@ function payBill($conn, $userID, $userType, $payload) {
         return;
     }
 
-    // Accept any string as payment_status from frontend. Default to 'paid' for backward compatibility.
+    // Accept any string as payment_status from frontend. Default to 'paid'.
     $paymentStatus = isset($data['payment_status']) ? (string)$data['payment_status'] : 'paid';
     $paymentStatus = trim($paymentStatus);
 
     try {
-        // Fetch table joined to categories to get hotel_id (and lock row)
-        // Tables doesn't directly store hotel_id in your schema; hotel is reachable via Categories.hotel_id
+        // Fetch table with category join (to determine hotel_id) and lock row
         $sql = "SELECT t.*, c.hotel_id AS category_hotel_id
                 FROM tables t
                 JOIN categories c ON t.category_id = c.category_id
@@ -78,26 +91,20 @@ function payBill($conn, $userID, $userType, $payload) {
             return;
         }
 
-        // Determine hotel_id priority:
-        // 1) from JWT payload if present (common key names: hotel_id or hotelId)
-        // 2) category_hotel_id (derived from Categories)
-        // 3) as last resort fallback to owner id (with warning) - optional and discouraged if owners manage multiple hotels
+        // Resolve hotel_id priority: token -> category -> fallback to userID
         $hotelIdFromToken = $payload['hotel_id'] ?? ($payload['hotelId'] ?? null);
         $hotelIdToUse = $hotelIdFromToken ?? ($table['category_hotel_id'] ?? null);
         $usedFallbackToUserId = false;
-
         if (empty($hotelIdToUse)) {
-            // last resort fallback — use with caution
             $hotelIdToUse = $userID;
             $usedFallbackToUserId = true;
         }
 
-        // Make sure hotel_id exists in Hotels table to avoid FK violation
+        // Validate hotel exists
         $chk = $conn->prepare("SELECT hotel_id FROM hotels WHERE hotel_id = :hotel_id");
         $chk->bindValue(':hotel_id', $hotelIdToUse);
         $chk->execute();
         $hotelRow = $chk->fetch(PDO::FETCH_ASSOC);
-
         if (!$hotelRow) {
             http_response_code(400);
             echo json_encode([
@@ -107,14 +114,13 @@ function payBill($conn, $userID, $userType, $payload) {
             return;
         }
 
-        // If table already available, nothing to pay
+        // Table already available => nothing to pay
         if (isset($table['table_status']) && $table['table_status'] === 'available') {
             http_response_code(400);
             echo json_encode(["error" => "Table is already available"]);
             return;
         }
 
-        // Begin transaction
         $conn->beginTransaction();
 
         $isSplitInTable = isset($table['is_split']) && ($table['is_split'] == 1 || $table['is_split'] === true);
@@ -135,15 +141,43 @@ function payBill($conn, $userID, $userType, $payload) {
                 }
             }
 
+            // decode JSON
+            $orderJson = json_decode($table['order_data'], true);
+            if (!is_array($orderJson)) {
+                $conn->rollBack();
+                http_response_code(500);
+                echo json_encode(["error" => "order_data malformed"]);
+                return;
+            }
+
+            // compute/validate amounts server-side
+            $sub_total = safe_float($orderJson['sub_total'] ?? 0);
+            $cgst_percentage = safe_float($orderJson['cgst_percentage'] ?? $orderJson['cgst_pct'] ?? 0);
+            $sgst_percentage = safe_float($orderJson['sgst_percentage'] ?? $orderJson['sgst_pct'] ?? 0);
+
+            $cgst_amount = round($sub_total * ($cgst_percentage / 100.0), 2);
+            $sgst_amount = round($sub_total * ($sgst_percentage / 100.0), 2);
+            $final_amount = round($sub_total + $cgst_amount + $sgst_amount, 2);
+
+            // attach/overwrite computed fields
+            $orderJson['sub_total'] = $sub_total;
+            $orderJson['cgst_percentage'] = $cgst_percentage;
+            $orderJson['sgst_percentage'] = $sgst_percentage;
+            $orderJson['cgst_amount'] = $cgst_amount;
+            $orderJson['sgst_amount'] = $sgst_amount;
+            $orderJson['final_amount'] = $final_amount;
+            $orderDataToStore = json_encode($orderJson);
+
+            // Insert into orderhistory: keep column name total_cost for backward compatibility; store final_amount there
             $insertSql = "INSERT INTO orderhistory
-                (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
-                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
+                (hotel_id, table_id, split_order_id, is_split, order_data, final_amount, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
+                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :final_amount, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
             $insStmt = $conn->prepare($insertSql);
 
             $insStmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
             $insStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
-            $insStmt->bindValue(':order_data', $table['order_data'] !== null ? $table['order_data'] : null, PDO::PARAM_STR);
-            $insStmt->bindValue(':total_cost', isset($table['total_cost']) ? $table['total_cost'] : null);
+            $insStmt->bindValue(':order_data', $orderDataToStore, PDO::PARAM_STR);
+            $insStmt->bindValue(':final_amount', $final_amount); // legacy column holds final amount
             $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
             $insStmt->bindValue(':taken_by_id', isset($table['taken_by_id']) ? $table['taken_by_id'] : null);
             $insStmt->bindValue(':taken_by_role', isset($table['taken_by_role']) ? $table['taken_by_role'] : null);
@@ -157,13 +191,13 @@ function payBill($conn, $userID, $userType, $payload) {
             }
             $historyId = $conn->lastInsertId();
 
-            // Reset table to defaults
+            // Reset table to defaults: clear order_data/split_order_data and clear final_amount column
             $updateSql = "UPDATE tables SET 
                             table_status = 'available',
                             order_data = NULL,
                             split_order_data = NULL,
                             is_split = 0,
-                            total_cost = NULL,
+                            final_amount = NULL,
                             taken_by_id = NULL,
                             taken_by_role = NULL,
                             updated_at = NOW()
@@ -228,20 +262,46 @@ function payBill($conn, $userID, $userType, $payload) {
             return;
         }
 
-        // Insert this split into OrderHistory
+        // Recompute/validate split totals server-side
+        $sub_total = safe_float($foundSplit['sub_total'] ?? 0);
+        // If items/orders exist but sub_total missing, compute from items array
+        if ($sub_total == 0 && !empty($foundSplit['items']) && is_array($foundSplit['items'])) {
+            $calc = 0.0;
+            foreach ($foundSplit['items'] as $it) {
+                $qty = isset($it['quantity']) ? floatval($it['quantity']) : 1.0;
+                $price = isset($it['price']) ? floatval($it['price']) : (isset($it['menu_price']) ? floatval($it['menu_price']) : 0.0);
+                $calc += $qty * $price;
+            }
+            $sub_total = round($calc, 2);
+        }
+
+        $cgst_percentage = safe_float($foundSplit['cgst_percentage'] ?? $foundSplit['cgst_pct'] ?? 0);
+        $sgst_percentage = safe_float($foundSplit['sgst_percentage'] ?? $foundSplit['sgst_pct'] ?? 0);
+        $cgst_amount = round($sub_total * ($cgst_percentage / 100.0), 2);
+        $sgst_amount = round($sub_total * ($sgst_percentage / 100.0), 2);
+        $final_amount = round($sub_total + $cgst_amount + $sgst_amount, 2);
+
+        $foundSplit['sub_total'] = $sub_total;
+        $foundSplit['cgst_percentage'] = $cgst_percentage;
+        $foundSplit['sgst_percentage'] = $sgst_percentage;
+        $foundSplit['cgst_amount'] = $cgst_amount;
+        $foundSplit['sgst_amount'] = $sgst_amount;
+        $foundSplit['final_amount'] = $final_amount;
+
+        // Insert this split into orderhistory
         $insertSql = "INSERT INTO orderhistory
-                (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
-                VALUES (:hotel_id, :table_id, :split_order_id, 1, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
+                (hotel_id, table_id, split_order_id, is_split, order_data, final_amount, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
+                VALUES (:hotel_id, :table_id, :split_order_id, 1, :order_data, :final_amount, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
         $insStmt = $conn->prepare($insertSql);
 
         $splitOrderJson = json_encode($foundSplit);
-        $splitTotalCost = isset($foundSplit['total_cost']) ? $foundSplit['total_cost'] : null;
+        $splitTotalCost = $final_amount;
 
         $insStmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
         $insStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
         $insStmt->bindValue(':split_order_id', $requestedSplitOrderId);
         $insStmt->bindValue(':order_data', $splitOrderJson, PDO::PARAM_STR);
-        $insStmt->bindValue(':total_cost', $splitTotalCost);
+        $insStmt->bindValue(':final_amount', $splitTotalCost); // legacy column holds final amount
         $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
         $insStmt->bindValue(':taken_by_id', isset($table['taken_by_id']) ? $table['taken_by_id'] : null);
         $insStmt->bindValue(':taken_by_role', isset($table['taken_by_role']) ? $table['taken_by_role'] : null);
@@ -255,17 +315,17 @@ function payBill($conn, $userID, $userType, $payload) {
         }
         $historyId = $conn->lastInsertId();
 
-        // Remove this split from the table's split_order_data
+        // Remove this split from table's split_order_data
         array_splice($splitData, $foundIndex, 1);
 
         if (count($splitData) === 0) {
-            // No more split orders remain - reset table to available
+            // No more splits remain - reset table to available and clear final_amount
             $updateSql = "UPDATE tables SET 
                             table_status = 'available',
                             split_order_data = NULL,
                             order_data = NULL,
                             is_split = 0,
-                            total_cost = NULL,
+                            final_amount = NULL,
                             taken_by_id = NULL,
                             taken_by_role = NULL,
                             updated_at = NOW()
@@ -285,37 +345,50 @@ function payBill($conn, $userID, $userType, $payload) {
                 "order_history_id" => $historyId,
                 "table_status" => "available"
             ];
-            if ($usedFallbackToUserId) {
-                $resp['warning'] = "hotel_id was not present in token or categories; used owner_id as fallback.";
-            }
+            if ($usedFallbackToUserId) $resp['warning'] = "hotel_id was not present in token or categories; used owner_id as fallback.";
             http_response_code(200);
             echo json_encode($resp);
             return;
         } else {
-            // Some splits remain - update split_order_data and recalc total_cost
-            $newSplitJson = json_encode($splitData);
-            $newTotal = 0;
-            foreach ($splitData as $s) {
-                if (isset($s['total_cost'])) {
-                    $newTotal += (float)$s['total_cost'];
-                } elseif (isset($s['items']) && is_array($s['items'])) {
+            // Some splits remain - update split_order_data and recalc final_amount using remaining splits' final_amounts
+            $newTotal = 0.0;
+            foreach ($splitData as $i => $s) {
+                $s_sub = safe_float($s['sub_total'] ?? 0);
+                if ($s_sub == 0 && !empty($s['items']) && is_array($s['items'])) {
+                    $calc = 0.0;
                     foreach ($s['items'] as $it) {
-                        $qty = isset($it['quantity']) ? (float)$it['quantity'] : 1;
-                        $price = isset($it['price']) ? (float)$it['price'] : 0;
-                        $newTotal += $qty * $price;
+                        $qty = isset($it['quantity']) ? floatval($it['quantity']) : 1.0;
+                        $price = isset($it['price']) ? floatval($it['price']) : (isset($it['menu_price']) ? floatval($it['menu_price']) : 0.0);
+                        $calc += $qty * $price;
                     }
+                    $s_sub = round($calc, 2);
                 }
+
+                $s_cg_pct = safe_float($s['cgst_percentage'] ?? $s['cgst_pct'] ?? 0);
+                $s_sg_pct = safe_float($s['sgst_percentage'] ?? $s['sgst_pct'] ?? 0);
+                $s_cg_amt = round($s_sub * ($s_cg_pct / 100.0), 2);
+                $s_sg_amt = round($s_sub * ($s_sg_pct / 100.0), 2);
+                $s_final = round($s_sub + $s_cg_amt + $s_sg_amt, 2);
+
+                $splitData[$i]['sub_total'] = $s_sub;
+                $splitData[$i]['cgst_amount'] = $s_cg_amt;
+                $splitData[$i]['sgst_amount'] = $s_sg_amt;
+                $splitData[$i]['final_amount'] = $s_final;
+
+                $newTotal += $s_final;
             }
+
+            $newSplitJson = json_encode($splitData);
 
             $updateSql = "UPDATE tables SET 
                             split_order_data = :split_order_data,
-                            total_cost = :total_cost,
+                            final_amount = :final_amount,
                             is_split = 1,
                             updated_at = NOW()
                           WHERE table_id = :table_id";
             $updStmt = $conn->prepare($updateSql);
             $updStmt->bindValue(':split_order_data', $newSplitJson, PDO::PARAM_STR);
-            $updStmt->bindValue(':total_cost', $newTotal);
+            $updStmt->bindValue(':final_amount', round($newTotal, 2));
             $updStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
 
             if (!$updStmt->execute()) {
@@ -331,11 +404,9 @@ function payBill($conn, $userID, $userType, $payload) {
                 "message" => "Split paid and removed from table (remaining splits updated)",
                 "order_history_id" => $historyId,
                 "table_status" => "occupied",
-                "remaining_total_cost" => $newTotal
+                "remaining_total_cost" => round($newTotal, 2)  // kept name for backward compatibility
             ];
-            if ($usedFallbackToUserId) {
-                $resp['warning'] = "hotel_id was not present in token or categories; used owner_id as fallback.";
-            }
+            if ($usedFallbackToUserId) $resp['warning'] = "hotel_id was not present in token or categories; used owner_id as fallback.";
             http_response_code(200);
             echo json_encode($resp);
             return;
@@ -352,4 +423,3 @@ function payBill($conn, $userID, $userType, $payload) {
         return;
     }
 }
-?>

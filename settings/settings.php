@@ -54,17 +54,6 @@ switch ($requestMethod) {
 
 /* ---------------------------
    POST - create settings for a hotel
-   Body JSON example:
-   {
-     "hotel_id": 8,
-     "gst_enabled": 1,
-     "single_bill_enabled": 0,
-     "kot_enabled": 1,
-     "bill_first_enabled": 0,
-     "always_printer_enable": 1,
-     "cgst_percentage": 9.00,
-     "sgst_percentage": 9.00
-   }
 */
 function createSetting($conn, $userID, $userType) {
     global $payload;
@@ -122,8 +111,34 @@ function createSetting($conn, $userID, $userType) {
         $cgst_percentage = isset($data['cgst_percentage']) ? floatval($data['cgst_percentage']) : 0.00;
         $sgst_percentage = isset($data['sgst_percentage']) ? floatval($data['sgst_percentage']) : 0.00;
 
-        $ins = "INSERT INTO settings (hotel_id, gst_enabled, single_bill_enabled, kot_enabled, bill_first_enabled, always_printer_enable, cgst_percentage, sgst_percentage, created_at, updated_at)
-                VALUES (:hotel_id, :gst_enabled, :single_bill_enabled, :kot_enabled, :bill_first_enabled, :always_printer_enable, :cgst_percentage, :sgst_percentage, NOW(), NOW())";
+        // day_start_time handling (expect "HH:MM:SS")
+        $day_start_time = null;
+        if (array_key_exists('day_start_time', $data)) {
+            $dst = $data['day_start_time'];
+            if ($dst === null || $dst === '') {
+                $day_start_time = null;
+            } else {
+                // validate HH:MM:SS (24h)
+                if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $dst)) {
+                    $day_start_time = $dst;
+                } else {
+                    // try to parse with strtotime
+                    $ts = strtotime($dst);
+                    if ($ts !== false) $day_start_time = date('H:i:s', $ts);
+                    else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Invalid day_start_time format. Expected HH:MM:SS or parseable time."]);
+                        return;
+                    }
+                }
+            }
+        } else {
+            // default to 00:00:00 if not provided (or you can leave as NULL)
+            $day_start_time = '00:00:00';
+        }
+
+        $ins = "INSERT INTO settings (hotel_id, gst_enabled, single_bill_enabled, kot_enabled, bill_first_enabled, always_printer_enable, cgst_percentage, sgst_percentage, day_start_time, created_at, updated_at)
+                VALUES (:hotel_id, :gst_enabled, :single_bill_enabled, :kot_enabled, :bill_first_enabled, :always_printer_enable, :cgst_percentage, :sgst_percentage, :day_start_time, NOW(), NOW())";
         $s = $conn->prepare($ins);
         $s->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
         $s->bindValue(':gst_enabled', $gst_enabled, PDO::PARAM_INT);
@@ -133,6 +148,9 @@ function createSetting($conn, $userID, $userType) {
         $s->bindValue(':always_printer_enable', $always_printer_enable, PDO::PARAM_INT);
         $s->bindValue(':cgst_percentage', $cgst_percentage);
         $s->bindValue(':sgst_percentage', $sgst_percentage);
+        // day_start_time bind (allow null)
+        if ($day_start_time === null) $s->bindValue(':day_start_time', null, PDO::PARAM_NULL);
+        else $s->bindValue(':day_start_time', $day_start_time);
         $s->execute();
 
         // fetch created row
@@ -153,8 +171,6 @@ function createSetting($conn, $userID, $userType) {
 
 /* ---------------------------
    GET - fetch settings by hotel_id only
-   Query/body:
-     - hotel_id (required)
 */
 function getSettings($conn, $userID, $userType) {
     $params = readParams();
@@ -208,9 +224,6 @@ function getSettings($conn, $userID, $userType) {
 
 /* ---------------------------
    PUT - partial update settings by hotel_id only
-   Body JSON: must include hotel_id
-   Any of these fields can be sent:
-     gst_enabled, single_bill_enabled, kot_enabled, bill_first_enabled, always_printer_enable, cgst_percentage, sgst_percentage
 */
 function updateSetting($conn, $userID, $userType) {
     global $payload;
@@ -265,17 +278,40 @@ function updateSetting($conn, $userID, $userType) {
         'bill_first_enabled' => 'int',
         'always_printer_enable' => 'int',
         'cgst_percentage' => 'float',
-        'sgst_percentage' => 'float'
+        'sgst_percentage' => 'float',
+        'day_start_time' => 'time' // string in HH:MM:SS
     ];
     $sets = [];
-    // only hotel_id is required in WHERE, so binds start with that
     $binds = [':hotel_id' => $hotelId];
 
     foreach ($allowed as $field => $type) {
         if (array_key_exists($field, $data)) {
-            $sets[] = "$field = :$field";
-            if ($type === 'int') $binds[":$field"] = (int)$data[$field];
-            else $binds[":$field"] = floatval($data[$field]);
+            if ($field === 'day_start_time') {
+                // validate or convert
+                $val = $data[$field];
+                if ($val === null || $val === '') {
+                    $sets[] = "$field = NULL";
+                    continue;
+                }
+                if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $val)) {
+                    $sets[] = "$field = :$field";
+                    $binds[":$field"] = $val;
+                } else {
+                    $ts = strtotime($val);
+                    if ($ts !== false) {
+                        $sets[] = "$field = :$field";
+                        $binds[":$field"] = date('H:i:s', $ts);
+                    } else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Invalid day_start_time format. Use HH:MM:SS or parseable time."]);
+                        return;
+                    }
+                }
+            } else {
+                $sets[] = "$field = :$field";
+                if ($type === 'int') $binds[":$field"] = (int)$data[$field];
+                else $binds[":$field"] = floatval($data[$field]);
+            }
         }
     }
 
@@ -293,6 +329,7 @@ function updateSetting($conn, $userID, $userType) {
         $stmt = $conn->prepare($sql);
         foreach ($binds as $k => $v) {
             if (is_int($v)) $stmt->bindValue($k, $v, PDO::PARAM_INT);
+            elseif ($v === null) $stmt->bindValue($k, null, PDO::PARAM_NULL);
             else $stmt->bindValue($k, $v);
         }
         if ($stmt->execute()) {
@@ -319,7 +356,6 @@ function updateSetting($conn, $userID, $userType) {
 
 /* ---------------------------
    DELETE - delete settings by hotel_id only (owner/manager only)
-   Body JSON: { "hotel_id": 8 }
 */
 function deleteSetting($conn, $userID, $userType) {
     global $payload;

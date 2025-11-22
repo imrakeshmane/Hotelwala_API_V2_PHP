@@ -1,6 +1,6 @@
 <?php
-include '../db.php'; // Include your database connection
-include '../validate.php'; // Include the file containing getJWTFromHeader and validateJWT functions
+include '../db.php'; // database connection (PDO $conn)
+include '../validate.php'; // JWT helpers (getJWTFromHeader, validateJWT)
 
 header('Content-Type: application/json');
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -22,9 +22,7 @@ if (isset($payload['error'])) {
 }
 
 /*
-  IMPORTANT: JWT payload may contain different keys depending on your auth implementation.
-  Some tokens might include 'owner_id' (for owner), others 'user_id' (for manager/staff).
-  We'll support both: prefer 'user_id' then fallback 'owner_id'.
+  Support tokens that use owner_id or user_id
 */
 $userID   = $payload['user_id']   ?? $payload['owner_id'] ?? null;
 $userType = $payload['user_type'] ?? null;
@@ -36,20 +34,12 @@ if ($userID === null || $userType === null) {
 }
 
 /**
- * Robust hotel-access check. Adapt the fallback checks to your schema.
- *
- * - owner: checks hotels.owner_id = actor id
- * - staff: tries users.hotel_id (if your users table stores hotel_id for staff)
- * - fallback: checks user_hotels mapping table (many-to-many)
- *
- * NOTE: remove or edit fallbacks you don't have. If you have a different mapping (manager_hotels etc.)
- * update the SQL accordingly.
+ * hasHotelAccess - check actor access to hotel (owner, staff, mapping)
  */
 function hasHotelAccess($conn, $hotelId, $actorId, $actorType) {
     if (empty($hotelId) || empty($actorId)) return false;
 
     try {
-        // 1) Owner check
         if ($actorType === 'owner') {
             $sql = "SELECT 1 FROM hotels WHERE hotel_id = :hotel_id AND owner_id = :actor_id LIMIT 1";
             $stmt = $conn->prepare($sql);
@@ -59,9 +49,7 @@ function hasHotelAccess($conn, $hotelId, $actorId, $actorType) {
             if ($stmt->fetchColumn()) return true;
         }
 
-        // 2) Staff check via users table
-        // NOTE: many schemas store staff->hotel mapping in users.hotel_id OR a separate mapping table.
-        // This query only checks users.user_id and users.hotel_id (no user_type column required).
+        // staff check via users.hotel_id
         $sql = "SELECT 1 FROM users WHERE user_id = :actor_id AND hotel_id = :hotel_id LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':actor_id', $actorId);
@@ -69,8 +57,7 @@ function hasHotelAccess($conn, $hotelId, $actorId, $actorType) {
         $stmt->execute();
         if ($stmt->fetchColumn()) return true;
 
-        // 3) Fallback: many-to-many mapping table (user_hotels)
-        // Keep this only if you have such a table.
+        // fallback mapping table user_hotels (if exists)
         $sql = "SELECT 1 FROM user_hotels WHERE user_id = :actor_id AND hotel_id = :hotel_id LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':actor_id', $actorId);
@@ -79,14 +66,110 @@ function hasHotelAccess($conn, $hotelId, $actorId, $actorType) {
         if ($stmt->fetchColumn()) return true;
 
     } catch (PDOException $e) {
-        // Optional: log error somewhere during development
-        // error_log('hasHotelAccess DB error: ' . $e->getMessage());
         return false;
     }
 
     return false;
 }
 
+/* Helpers */
+
+// safe numeric parse
+function safe_float($v) {
+    if (!isset($v)) return 0.0;
+    if (!is_numeric($v)) return 0.0;
+    return floatval($v);
+}
+
+// compute and normalize a single order_data object (orders array => compute sub_total and tax fields)
+// returns normalized order object (array) and final_amount (float)
+function computeOrderFields(array $orderObj, $defaultCgstPct = 0.0, $defaultSgstPct = 0.0) {
+    $orders = isset($orderObj['orders']) && is_array($orderObj['orders']) ? $orderObj['orders'] : [];
+
+    // compute sub_total from items
+    $computedSub = 0.0;
+    foreach ($orders as $it) {
+        $qty = isset($it['quantity']) ? floatval($it['quantity']) : 1.0;
+        $price = isset($it['price']) ? floatval($it['price']) : 0.0;
+        $computedSub += ($qty * $price);
+    }
+    $computedSub = round($computedSub, 2);
+
+    // percentages: prefer fields in object else defaults
+    $cg_pct = safe_float($orderObj['cgst_percentage'] ?? $orderObj['cgst_pct'] ?? $defaultCgstPct);
+    $sg_pct = safe_float($orderObj['sgst_percentage'] ?? $orderObj['sgst_pct'] ?? $defaultSgstPct);
+
+    // compute amounts
+    $cg_amt = round($computedSub * ($cg_pct / 100.0), 2);
+    $sg_amt = round($computedSub * ($sg_pct / 100.0), 2);
+    $final_amt = round($computedSub + $cg_amt + $sg_amt, 2);
+
+    // normalize and attach
+    $orderObj['orders'] = $orders;
+    $orderObj['sub_total'] = $computedSub;
+    $orderObj['cgst_percentage'] = $cg_pct;
+    $orderObj['sgst_percentage'] = $sg_pct;
+    $orderObj['cgst_amount'] = $cg_amt;
+    $orderObj['sgst_amount'] = $sg_amt;
+    $orderObj['final_amount'] = $final_amt;
+
+    return [$orderObj, $final_amt];
+}
+
+// compute for split array of objects - returns normalized split array and overall final sum
+function computeSplitArray(array $splitArr, $defaultCgstPct = 0.0, $defaultSgstPct = 0.0) {
+    $computedFinalSum = 0.0;
+    $normalized = [];
+    foreach ($splitArr as $sp) {
+        $orderObj = [];
+
+        if (isset($sp['items']) && is_array($sp['items'])) {
+            $orderObj['orders'] = array_map(function($it){
+                return [
+                    'menu_item_id' => $it['menu_item_id'] ?? $it['menu_id'] ?? null,
+                    'name' => $it['name'] ?? $it['menu_name'] ?? null,
+                    'price' => isset($it['price']) ? $it['price'] : ($it['menu_price'] ?? 0),
+                    'quantity' => isset($it['quantity']) ? $it['quantity'] : 1,
+                ];
+            }, $sp['items']);
+        } elseif (isset($sp['orders']) && is_array($sp['orders'])) {
+            $orderObj['orders'] = $sp['orders'];
+        } else {
+            $orderObj['orders'] = [];
+        }
+
+        if (isset($sp['cgst_percentage'])) $orderObj['cgst_percentage'] = $sp['cgst_percentage'];
+        if (isset($sp['sgst_percentage'])) $orderObj['sgst_percentage'] = $sp['sgst_percentage'];
+
+        list($normalizedOrder, $final_amt) = computeOrderFields($orderObj, $defaultCgstPct, $defaultSgstPct);
+
+        $out = [
+            'split_order_id' => isset($sp['split_order_id']) ? $sp['split_order_id'] : null,
+            'items' => isset($sp['items']) && is_array($sp['items']) ? $sp['items'] : array_map(function($o){
+                return [
+                    'menu_item_id' => $o['menu_item_id'] ?? $o['menu_id'] ?? null,
+                    'name' => $o['name'] ?? null,
+                    'price' => isset($o['price']) ? $o['price'] : 0,
+                    'quantity' => isset($o['quantity']) ? intval($o['quantity']) : 1,
+                ];
+            }, $normalizedOrder['orders']),
+            'sub_total' => $normalizedOrder['sub_total'],
+            'cgst_percentage' => $normalizedOrder['cgst_percentage'],
+            'sgst_percentage' => $normalizedOrder['sgst_percentage'],
+            'cgst_amount' => $normalizedOrder['cgst_amount'],
+            'sgst_amount' => $normalizedOrder['sgst_amount'],
+            'final_amount' => $normalizedOrder['final_amount'],
+        ];
+
+        $normalized[] = $out;
+        $computedFinalSum += $final_amt;
+    }
+
+    $computedFinalSum = round($computedFinalSum, 2);
+    return [$normalized, $computedFinalSum];
+}
+
+/* Route handling */
 
 switch ($requestMethod) {
     case 'POST': // Create a new table
@@ -107,8 +190,8 @@ switch ($requestMethod) {
         break;
 }
 
+/* GET: list categories + tables for a hotel */
 function getTables($conn, $userID, $userType) {
-    // Accept hotel_id from GET query or POST JSON body
     $hotelId = null;
     if (isset($_GET['hotel_id'])) {
         $hotelId = $_GET['hotel_id'];
@@ -123,14 +206,12 @@ function getTables($conn, $userID, $userType) {
         return;
     }
 
-    // Verify access for this hotel for ANY user type (owner/manager/staff)
     if (!hasHotelAccess($conn, $hotelId, $userID, $userType)) {
         http_response_code(403);
         echo json_encode(["error" => "Hotel not found or you don't have access"]);
         return;
     }
 
-    // fetch categories for hotel
     $sql = "SELECT category_id, category_name, category_table_count, created_at, updated_at 
             FROM categories WHERE hotel_id = :hotel_id ORDER BY category_id ASC";
     $stmt = $conn->prepare($sql);
@@ -140,20 +221,20 @@ function getTables($conn, $userID, $userType) {
 
     $resultCategories = [];
     foreach ($categories as $c) {
-        // fetch tables for this category
-        $sql2 = "SELECT * FROM tables WHERE category_id = :category_id ORDER BY table_number+0 ASC, table_id ASC";
+        $sql2 = "SELECT * FROM tables WHERE category_id = :category_id ORDER BY CAST(table_number AS UNSIGNED) ASC, table_id ASC";
         $stmt2 = $conn->prepare($sql2);
         $stmt2->bindParam(':category_id', $c['category_id']);
         $stmt2->execute();
         $tables = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-        // decode JSON fields so client receives objects (not JSON strings)
         foreach ($tables as &$t) {
-            $t['table_id'] = (int)$t['table_id'];
-            $t['category_id'] = (int)$t['category_id'];
-            $t['total_cost'] = is_null($t['total_cost']) ? 0 : (float)$t['total_cost'];
-            $t['is_split'] = (int)$t['is_split'];
-            $t['taken_by_id'] = is_null($t['taken_by_id']) ? null : (int)$t['taken_by_id'];
+            // defensive checks to avoid warnings
+            $t['table_id'] = isset($t['table_id']) ? (int)$t['table_id'] : null;
+            $t['category_id'] = isset($t['category_id']) ? (int)$t['category_id'] : null;
+            // Use final_amount column (may be null)
+            $t['final_amount'] = isset($t['final_amount']) ? number_format((float)$t['final_amount'], 2, '.', '') : "0.00";
+            $t['is_split'] = isset($t['is_split']) ? (int)$t['is_split'] : 0;
+            $t['taken_by_id'] = isset($t['taken_by_id']) ? (int)$t['taken_by_id'] : null;
 
             if (!empty($t['order_data'])) {
                 $decoded = json_decode($t['order_data'], true);
@@ -185,18 +266,17 @@ function getTables($conn, $userID, $userType) {
     echo json_encode(["categories" => $resultCategories]);
 }
 
+/* CREATE new table */
 function createTable($conn, $userID, $userType) {
-    // only owner or manager allowed
     if ($userType !== 'owner' && $userType !== 'manager') {
-        http_response_code(403); // Forbidden
+        http_response_code(403);
         echo json_encode(["error" => "Only owners or managers can create tables"]);
         return;
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
-
     if (!isset($data['category_id'], $data['table_number'], $data['hotel_id'])) {
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         echo json_encode(["error" => "Missing required fields. category_id, table_number and hotel_id required"]);
         return;
     }
@@ -205,66 +285,86 @@ function createTable($conn, $userID, $userType) {
     $tableNumber = $data['table_number'];
     $hotelId = $data['hotel_id'];
 
-    // Verify the actor has access to this hotel
     if (!hasHotelAccess($conn, $hotelId, $userID, $userType)) {
         http_response_code(403);
         echo json_encode(["error" => "You don't have access to this hotel"]);
         return;
     }
 
-    // Check if the category exists and belongs to the hotel
+    // Check category belongs to hotel
     $sql = "SELECT category_id FROM categories WHERE category_id = :category_id AND hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
-
     if ($stmt->rowCount() === 0) {
-        http_response_code(404); // Not Found
+        http_response_code(404);
         echo json_encode(["error" => "Category not found for this hotel"]);
         return;
     }
 
     $tableStatus = $data['table_status'] ?? 'available';
-    $isSplit = $data['is_split'] ?? false;
-    $splitOrderData = $data['split_order_data'] ?? null;
-    $orderData = $data['order_data'] ?? null;
+    $isSplit = isset($data['is_split']) ? ($data['is_split'] ? 1 : 0) : 0;
+    $splitOrderDataRaw = $data['split_order_data'] ?? null;
+    $orderDataRaw = $data['order_data'] ?? null;
     $takenById = $data['taken_by_id'] ?? null;
     $takenByRole = $data['taken_by_role'] ?? null;
 
-    // Insert the new table
-    $sql = "INSERT INTO tables (category_id, table_number, table_status, is_split, split_order_data, order_data, taken_by_id, taken_by_role) 
-            VALUES (:category_id, :table_number, :table_status, :is_split, :split_order_data, :order_data, :taken_by_id, :taken_by_role)";
+    // compute and normalize order_data / split_order_data and final_amount
+    $finalAmountToStore = null;
+    $orderJson = null;
+    $splitJson = null;
+
+    if ($isSplit && is_array($splitOrderDataRaw)) {
+        list($normalizedSplit, $computedFinal) = computeSplitArray($splitOrderDataRaw);
+        $splitJson = json_encode($normalizedSplit);
+        $finalAmountToStore = $computedFinal;
+    } elseif (!$isSplit && is_array($orderDataRaw)) {
+        list($normalizedOrder, $finalAmt) = computeOrderFields($orderDataRaw);
+        $orderJson = json_encode($normalizedOrder);
+        $finalAmountToStore = $finalAmt;
+    }
+
+    // Insert
+    $sql = "INSERT INTO tables (category_id, table_number, table_status, is_split, split_order_data, order_data, taken_by_id, taken_by_role, final_amount) 
+            VALUES (:category_id, :table_number, :table_status, :is_split, :split_order_data, :order_data, :taken_by_id, :taken_by_role, :final_amount)";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->bindParam(':table_number', $tableNumber);
     $stmt->bindParam(':table_status', $tableStatus);
     $stmt->bindParam(':is_split', $isSplit);
-    $stmt->bindParam(':split_order_data', json_encode($splitOrderData));
-    $stmt->bindParam(':order_data', json_encode($orderData));
+    $stmt->bindValue(':split_order_data', isset($splitJson) ? $splitJson : null, PDO::PARAM_STR);
+    $stmt->bindValue(':order_data', isset($orderJson) ? $orderJson : null, PDO::PARAM_STR);
     $stmt->bindParam(':taken_by_id', $takenById);
     $stmt->bindParam(':taken_by_role', $takenByRole);
 
+    if ($finalAmountToStore === null) {
+        $stmt->bindValue(':final_amount', null, PDO::PARAM_NULL);
+    } else {
+        $stmt->bindValue(':final_amount', $finalAmountToStore);
+    }
+
     if ($stmt->execute()) {
-        http_response_code(201); // Created
+        http_response_code(201);
         echo json_encode(["message" => "Table created successfully"]);
     } else {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error creating table"]);
+        http_response_code(500);
+        $err = $stmt->errorInfo();
+        echo json_encode(["error" => "Error creating table", "db_error" => $err]);
     }
 }
 
+/* UPDATE table */
 function updateTable($conn, $userID, $userType) {
     if ($userType !== 'owner' && $userType !== 'manager') {
-        http_response_code(403); // Forbidden
+        http_response_code(403);
         echo json_encode(["error" => "Only owners or managers can update tables"]);
         return;
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
-
     if (!isset($data['table_id'], $data['category_id'], $data['table_number'], $data['hotel_id'])) {
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         echo json_encode(["error" => "Missing required fields"]);
         return;
     }
@@ -274,20 +374,18 @@ function updateTable($conn, $userID, $userType) {
     $tableNumber = $data['table_number'];
     $hotelId = $data['hotel_id'];
 
-    // Verify the actor has access to this hotel
     if (!hasHotelAccess($conn, $hotelId, $userID, $userType)) {
         http_response_code(403);
         echo json_encode(["error" => "You don't have access to this hotel"]);
         return;
     }
 
-    // Check if the category exists and belongs to the hotel
+    // Check category
     $sql = "SELECT category_id FROM categories WHERE category_id = :category_id AND hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
-
     if ($stmt->rowCount() === 0) {
         http_response_code(404);
         echo json_encode(["error" => "Category not found for this hotel"]);
@@ -295,46 +393,83 @@ function updateTable($conn, $userID, $userType) {
     }
 
     $tableStatus = $data['table_status'] ?? 'available';
-    $isSplit = $data['is_split'] ?? false;
-    $splitOrderData = $data['split_order_data'] ?? null;
-    $orderData = $data['order_data'] ?? null;
+    $isSplit = isset($data['is_split']) ? ($data['is_split'] ? 1 : 0) : 0;
+    // use array_key_exists so we can detect explicit null vs omitted
+    $splitOrderDataRaw = array_key_exists('split_order_data', $data) ? $data['split_order_data'] : null;
+    $orderDataRaw = array_key_exists('order_data', $data) ? $data['order_data'] : null;
     $takenById = $data['taken_by_id'] ?? null;
     $takenByRole = $data['taken_by_role'] ?? null;
 
-    // Update the table
-    $sql = "UPDATE tables SET table_number = :table_number, table_status = :table_status, is_split = :is_split, 
-            split_order_data = :split_order_data, order_data = :order_data, taken_by_id = :taken_by_id, 
-            taken_by_role = :taken_by_role WHERE table_id = :table_id AND category_id = :category_id";
+    // compute normalized JSON and final_amount
+    $finalAmountToStore = null;
+    $orderJson = null;
+    $splitJson = null;
+
+    if ($isSplit && is_array($splitOrderDataRaw)) {
+        list($normalizedSplit, $computedFinal) = computeSplitArray($splitOrderDataRaw);
+        $splitJson = json_encode($normalizedSplit);
+        $finalAmountToStore = $computedFinal;
+    } elseif (!$isSplit && is_array($orderDataRaw)) {
+        list($normalizedOrder, $finalAmt) = computeOrderFields($orderDataRaw);
+        $orderJson = json_encode($normalizedOrder);
+        $finalAmountToStore = $finalAmt;
+    }
+
+    // Update
+    $sql = "UPDATE tables SET table_number = :table_number, table_status = :table_status, is_split = :is_split,
+            split_order_data = :split_order_data, order_data = :order_data, taken_by_id = :taken_by_id, taken_by_role = :taken_by_role, final_amount = :final_amount
+            WHERE table_id = :table_id AND category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':table_number', $tableNumber);
     $stmt->bindParam(':table_status', $tableStatus);
     $stmt->bindParam(':is_split', $isSplit);
-    $stmt->bindParam(':split_order_data', json_encode($splitOrderData));
-    $stmt->bindParam(':order_data', json_encode($orderData));
+
+    if (isset($splitJson)) {
+        $stmt->bindValue(':split_order_data', $splitJson, PDO::PARAM_STR);
+    } else {
+        // if caller provided the key (even null) use it, else set to NULL
+        $stmt->bindValue(':split_order_data', is_null($splitOrderDataRaw) ? null : (is_array($splitOrderDataRaw) ? json_encode($splitOrderDataRaw) : $splitOrderDataRaw), PDO::PARAM_STR);
+    }
+
+    if (isset($orderJson)) {
+        $stmt->bindValue(':order_data', $orderJson, PDO::PARAM_STR);
+    } else {
+        $stmt->bindValue(':order_data', is_null($orderDataRaw) ? null : (is_array($orderDataRaw) ? json_encode($orderDataRaw) : $orderDataRaw), PDO::PARAM_STR);
+    }
+
     $stmt->bindParam(':taken_by_id', $takenById);
     $stmt->bindParam(':taken_by_role', $takenByRole);
+
+    if ($finalAmountToStore === null) {
+        $stmt->bindValue(':final_amount', null, PDO::PARAM_NULL);
+    } else {
+        $stmt->bindValue(':final_amount', $finalAmountToStore);
+    }
+
     $stmt->bindParam(':table_id', $tableId);
     $stmt->bindParam(':category_id', $categoryId);
 
     if ($stmt->execute()) {
-        http_response_code(200); // OK
+        http_response_code(200);
         echo json_encode(["message" => "Table updated successfully"]);
     } else {
-        http_response_code(500); // Internal Server Error
-        echo json_encode(["error" => "Error updating table"]);
+        http_response_code(500);
+        $err = $stmt->errorInfo();
+        echo json_encode(["error" => "Error updating table", "db_error" => $err]);
     }
 }
 
+/* DELETE table */
 function deleteTable($conn, $userID, $userType) {
     if ($userType !== 'owner' && $userType !== 'manager') {
-        http_response_code(403); // Forbidden
+        http_response_code(403);
         echo json_encode(["error" => "Only owners or managers can delete tables"]);
         return;
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
     if (!isset($data['table_id'], $data['category_id'], $data['hotel_id'])) {
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         echo json_encode(["error" => "Table ID, Category ID and hotel_id are required"]);
         return;
     }
@@ -343,37 +478,33 @@ function deleteTable($conn, $userID, $userType) {
     $categoryId = $data['category_id'];
     $hotelId = $data['hotel_id'];
 
-    // Verify the actor has access to this hotel
     if (!hasHotelAccess($conn, $hotelId, $userID, $userType)) {
         http_response_code(403);
         echo json_encode(["error" => "You don't have access to this hotel"]);
         return;
     }
 
-    // Check if the category exists and belongs to the hotel
     $sql = "SELECT category_id FROM categories WHERE category_id = :category_id AND hotel_id = :hotel_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':category_id', $categoryId);
     $stmt->bindParam(':hotel_id', $hotelId);
     $stmt->execute();
-
     if ($stmt->rowCount() === 0) {
         http_response_code(404);
         echo json_encode(["error" => "Category not found for this hotel"]);
         return;
     }
 
-    // Delete the table
     $sql = "DELETE FROM tables WHERE table_id = :table_id AND category_id = :category_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':table_id', $tableId);
     $stmt->bindParam(':category_id', $categoryId);
 
     if ($stmt->execute()) {
-        http_response_code(200); // OK
+        http_response_code(200);
         echo json_encode(["message" => "Table deleted successfully"]);
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500);
         echo json_encode(["error" => "Error deleting table"]);
     }
 }

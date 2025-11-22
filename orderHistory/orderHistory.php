@@ -115,7 +115,7 @@ function createOrderHistory($conn, $userID, $userType) {
 
     $cgstPct = isset($data['cgst_percentage']) ? floatval($data['cgst_percentage']) : null;
     $sgstPct = isset($data['sgst_percentage']) ? floatval($data['sgst_percentage']) : null;
-    $clientTotalCost = isset($data['total_cost']) ? floatval($data['total_cost']) : null;
+    $clientTotalCost = isset($data['final_amount']) ? floatval($data['final_amount']) : null;
     $clientFinalAmount = isset($data['final_amount']) ? floatval($data['final_amount']) : null;
 
     try {
@@ -214,13 +214,13 @@ function createOrderHistory($conn, $userID, $userType) {
 
         // Insert into orderhistory table
         $insertSql = "INSERT INTO orderhistory
-                (hotel_id, table_id, split_order_id, is_split, order_data, total_cost, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
-                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :total_cost, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
+                (hotel_id, table_id, split_order_id, is_split, order_data, final_amount, payment_status, taken_by_id, taken_by_role, created_at, updated_at)
+                VALUES (:hotel_id, :table_id, NULL, 0, :order_data, :final_amount, :payment_status, :taken_by_id, :taken_by_role, NOW(), NOW())";
         $insStmt = $conn->prepare($insertSql);
         $insStmt->bindValue(':hotel_id', $hotelIdToUse, PDO::PARAM_INT);
         $insStmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
         $insStmt->bindValue(':order_data', $orderJson, PDO::PARAM_STR);
-        $insStmt->bindValue(':total_cost', $finalAmount);
+        $insStmt->bindValue(':final_amount', $finalAmount);
         $insStmt->bindValue(':payment_status', $paymentStatus, PDO::PARAM_STR);
         $insStmt->bindValue(':taken_by_id', $takenById !== null ? $takenById : null);
         $insStmt->bindValue(':taken_by_role', $takenByRole !== null ? $takenByRole : null);
@@ -240,7 +240,7 @@ function createOrderHistory($conn, $userID, $userType) {
                         order_data = NULL,
                         split_order_data = NULL,
                         is_split = 0,
-                        total_cost = NULL,
+                        final_amount = NULL,
                         taken_by_id = NULL,
                         taken_by_role = NULL,
                         updated_at = NOW()
@@ -328,45 +328,9 @@ function getOrderHistory($conn, $userID, $userType) {
         return;
     }
 
-    // Optional filters
-    $fromDateRaw = isset($params['from_date']) ? trim((string)$params['from_date']) : null;
-    $toDateRaw = isset($params['to_date']) ? trim((string)$params['to_date']) : null;
-    $paymentStatus = isset($params['payment_status']) ? trim((string)$params['payment_status']) : null;
-    $tableIdFilter = isset($params['table_id']) ? (int)$params['table_id'] : null;
-
-    // Normalize/validate dates: allow 'YYYY-MM-DD' or full ISO; produce SQL datetimes
-    $fromDate = null;
-    $toDate = null;
-    if (!empty($fromDateRaw)) {
-        // try Y-m-d
-        $d = DateTime::createFromFormat('Y-m-d', $fromDateRaw);
-        if ($d === false) {
-            // try generic parse
-            try { $d = new DateTime($fromDateRaw); } catch (Exception $e) { $d = false; }
-        }
-        if ($d !== false) $fromDate = $d->format('Y-m-d 00:00:00');
-        else {
-            http_response_code(400);
-            echo json_encode(["error" => "Invalid from_date. Use YYYY-MM-DD or ISO datetime."]);
-            return;
-        }
-    }
-    if (!empty($toDateRaw)) {
-        $d = DateTime::createFromFormat('Y-m-d', $toDateRaw);
-        if ($d === false) {
-            try { $d = new DateTime($toDateRaw); } catch (Exception $e) { $d = false; }
-        }
-        if ($d !== false) {
-            // to_date inclusive -> set to end of day if date-only provided
-            $toDate = $d->format('Y-m-d') . ' 23:59:59';
-        } else {
-            http_response_code(400);
-            echo json_encode(["error" => "Invalid to_date. Use YYYY-MM-DD or ISO datetime."]);
-            return;
-        }
-    }
-
-    // If detail requested
+    // -----------------------
+    // DETAIL BRANCH: if client requests a specific order_history_id, return single object immediately
+    // -----------------------
     if (isset($params['order_history_id'])) {
         $id = (int)$params['order_history_id'];
         $sql = "SELECT oh.*, t.table_number
@@ -399,7 +363,7 @@ function getOrderHistory($conn, $userID, $userType) {
             'split_order_id' => $row['split_order_id'] !== null ? (int)$row['split_order_id'] : null,
             'order_data_raw' => $row['order_data'],
             'order_data' => $decoded,
-            'total_cost' => (float)$row['total_cost'],
+            'final_amount' => (float)$row['final_amount'],
             'payment_status' => $row['payment_status'],
             'taken_by_id' => $row['taken_by_id'],
             'taken_by_role' => $row['taken_by_role'],
@@ -407,6 +371,109 @@ function getOrderHistory($conn, $userID, $userType) {
             'updated_at' => $row['updated_at'],
         ]);
         return;
+    }
+
+    // Optional filters
+    $fromDateRaw = isset($params['from_date']) ? trim((string)$params['from_date']) : null;
+    $toDateRaw = isset($params['to_date']) ? trim((string)$params['to_date']) : null;
+    $paymentStatus = isset($params['payment_status']) ? trim((string)$params['payment_status']) : null;
+    $tableIdFilter = isset($params['table_id']) ? (int)$params['table_id'] : null;
+
+    // Get hotel's day_start_time from settings (fallback to 00:00:00)
+    $dayStartTime = '00:00:00';
+    try {
+        $sstmt = $conn->prepare("SELECT day_start_time FROM settings WHERE hotel_id = :hotel_id LIMIT 1");
+        $sstmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
+        $sstmt->execute();
+        $srow = $sstmt->fetch(PDO::FETCH_ASSOC);
+        if ($srow && !empty($srow['day_start_time'])) {
+            $dayStartTime = $srow['day_start_time'];
+        }
+    } catch (Exception $e) {
+        // ignore and use default dayStartTime
+    }
+
+    // Helper: produce Y-m-d H:i:s from a Y-m-d date + day_start_time
+    $makeDateTime = function($dateOnly) use ($dayStartTime) {
+        return DateTime::createFromFormat('Y-m-d H:i:s', $dateOnly . ' ' . $dayStartTime);
+    };
+
+    // Normalize/validate dates & compute actual window used
+    $fromDateTime = null;
+    $toDateTime = null;
+    date_default_timezone_set(@date_default_timezone_get() ?: 'UTC'); // rely on server TZ (adjust if needed)
+
+    if (!empty($fromDateRaw) || !empty($toDateRaw)) {
+        // If user supplied explicit date(s) -> treat them as hotel-days starting at day_start_time
+        if (!empty($fromDateRaw)) {
+            $d = DateTime::createFromFormat('Y-m-d', $fromDateRaw);
+            if ($d === false) {
+                // try generic parse
+                try { $d = new DateTime($fromDateRaw); } catch (Exception $e) { $d = false; }
+            }
+            if ($d !== false) {
+                // set to date + day_start_time
+                $fromDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $d->format('Y-m-d') . ' ' . $dayStartTime);
+                if ($fromDateTime === false) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "Invalid from_date format"]);
+                    return;
+                }
+            } else {
+                http_response_code(400);
+                echo json_encode(["error" => "Invalid from_date. Use YYYY-MM-DD or ISO datetime."]);
+                return;
+            }
+        }
+
+        if (!empty($toDateRaw)) {
+            $d = DateTime::createFromFormat('Y-m-d', $toDateRaw);
+            if ($d === false) {
+                try { $d = new DateTime($toDateRaw); } catch (Exception $e) { $d = false; }
+            }
+            if ($d !== false) {
+                // to_date is inclusive of that hotel-day, so to = to_date + day_start_time + 1 day -1 second
+                $tmp = DateTime::createFromFormat('Y-m-d H:i:s', $d->format('Y-m-d') . ' ' . $dayStartTime);
+                if ($tmp === false) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "Invalid to_date format"]);
+                    return;
+                }
+                $toDateTime = clone $tmp;
+                $toDateTime->modify('+1 day')->modify('-1 second');
+            } else {
+                http_response_code(400);
+                echo json_encode(["error" => "Invalid to_date. Use YYYY-MM-DD or ISO datetime."]);
+                return;
+            }
+        }
+    } else {
+        // No explicit from/to -> default to current hotel-day that contains "now"
+        $now = new DateTime();
+        $todayStart = DateTime::createFromFormat('Y-m-d H:i:s', $now->format('Y-m-d') . ' ' . $dayStartTime);
+        if ($todayStart === false) {
+            // fallback to midnight if dayStart parse fails
+            $todayStart = new DateTime($now->format('Y-m-d') . ' 00:00:00');
+        }
+        if ($now < $todayStart) {
+            // current time is before today's day start — use yesterday's start
+            $fromDateTime = clone $todayStart;
+            $fromDateTime->modify('-1 day');
+        } else {
+            $fromDateTime = $todayStart;
+        }
+        $toDateTime = clone $fromDateTime;
+        $toDateTime->modify('+1 day')->modify('-1 second');
+    }
+
+    // If only one bound provided - ensure both (rare but safe)
+    if ($fromDateTime === null && $toDateTime !== null) {
+        // set from as to - 24h + 1s
+        $fromDateTime = clone $toDateTime;
+        $fromDateTime->modify('-1 day')->modify('+1 second');
+    } elseif ($toDateTime === null && $fromDateTime !== null) {
+        $toDateTime = clone $fromDateTime;
+        $toDateTime->modify('+1 day')->modify('-1 second');
     }
 
     // list: pagination (same defaults)
@@ -419,13 +486,13 @@ function getOrderHistory($conn, $userID, $userType) {
         $where = "WHERE oh.hotel_id = :hotel_id";
         $binds = [':hotel_id' => $hotelId];
 
-        if ($fromDate !== null) {
+        if ($fromDateTime !== null) {
             $where .= " AND oh.created_at >= :from_date";
-            $binds[':from_date'] = $fromDate;
+            $binds[':from_date'] = $fromDateTime->format('Y-m-d H:i:s');
         }
-        if ($toDate !== null) {
+        if ($toDateTime !== null) {
             $where .= " AND oh.created_at <= :to_date";
-            $binds[':to_date'] = $toDate;
+            $binds[':to_date'] = $toDateTime->format('Y-m-d H:i:s');
         }
         if (!empty($paymentStatus)) {
             $where .= " AND oh.payment_status = :payment_status";
@@ -444,9 +511,17 @@ function getOrderHistory($conn, $userID, $userType) {
         $totalRow = $cstmt->fetch(PDO::FETCH_ASSOC);
         $totalCount = (int)($totalRow['total'] ?? 0);
 
+        // total collection sum for same window
+        $sumSql = "SELECT COALESCE(SUM(oh.final_amount),0) AS total_collection FROM orderhistory oh $where";
+        $sstmt2 = $conn->prepare($sumSql);
+        foreach ($binds as $k => $v) $sstmt2->bindValue($k, $v);
+        $sstmt2->execute();
+        $sumRow = $sstmt2->fetch(PDO::FETCH_ASSOC);
+        $totalCollection = (float)($sumRow['total_collection'] ?? 0.0);
+
         // fetch rows
         $sql = "SELECT oh.order_history_id, oh.hotel_id, oh.table_id, t.table_number, oh.is_split, oh.split_order_id,
-                       oh.total_cost, oh.payment_status, oh.created_at, oh.updated_at, oh.order_data
+                       oh.final_amount, oh.payment_status, oh.created_at, oh.updated_at, oh.order_data
                 FROM orderhistory oh
                 LEFT JOIN tables t ON oh.table_id = t.table_id
                 $where
@@ -467,7 +542,7 @@ function getOrderHistory($conn, $userID, $userType) {
         foreach ($rows as $r) {
             $first_item = null;
             $items_count = 0;
-            $final_amount = $r['total_cost'];
+            $final_amount = $r['final_amount'];
             if (!empty($r['order_data'])) {
                 $decoded = json_decode($r['order_data'], true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
@@ -476,7 +551,7 @@ function getOrderHistory($conn, $userID, $userType) {
                         $first_item = $list[0]['name'] ?? $list[0]['MenuName'] ?? null;
                         $items_count = count($list);
                     }
-                    $final_amount = $decoded['final_amount'] ?? $decoded['total_cost'] ?? $final_amount;
+                    $final_amount = $decoded['final_amount'] ?? $decoded['final_amount'] ?? $final_amount;
                 }
             }
             $items[] = [
@@ -485,7 +560,7 @@ function getOrderHistory($conn, $userID, $userType) {
                 'table_number' => $r['table_number'],
                 'is_split' => (int)$r['is_split'],
                 'split_order_id' => $r['split_order_id'] !== null ? (int)$r['split_order_id'] : null,
-                'total_cost' => (float)$r['total_cost'],
+                'final_amount' => (float)$r['final_amount'],
                 'final_amount' => (float)$final_amount,
                 'payment_status' => $r['payment_status'],
                 'created_at' => $r['created_at'],
@@ -498,8 +573,12 @@ function getOrderHistory($conn, $userID, $userType) {
         echo json_encode([
             "orderhistory" => $items,
             "total_count" => $totalCount,
+            "total_collection" => $totalCollection,
             "page" => $page,
             "per_page" => $perPage,
+            "from_datetime" => $fromDateTime ? $fromDateTime->format('Y-m-d H:i:s') : null,
+            "to_datetime" => $toDateTime ? $toDateTime->format('Y-m-d H:i:s') : null,
+            "day_start_time" => $dayStartTime
         ]);
         return;
 
@@ -509,6 +588,7 @@ function getOrderHistory($conn, $userID, $userType) {
         return;
     }
 }
+
 
 
 /* ---------------------------
@@ -558,7 +638,7 @@ function updateOrderHistory($conn, $userID, $userType) {
     }
     // If you want manager permission checks, implement mapping checks here.
 
-    $allowed = ['order_data', 'total_cost', 'payment_status', 'taken_by_id', 'taken_by_role'];
+    $allowed = ['order_data', 'final_amount', 'payment_status', 'taken_by_id', 'taken_by_role'];
     $sets = [];
     $params = [];
     foreach ($allowed as $f) {

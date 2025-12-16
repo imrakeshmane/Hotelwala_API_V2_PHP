@@ -43,7 +43,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"phone_number\": \"8344474777\",\r\n  \"password\": \"pass1234\"\r\n}",
+							"raw": "{\r\n  \"phone_number\": \"9123456747\",\r\n  \"password\": \"pass1234\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -174,7 +174,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\"hotel_id\":1\r\n}",
+							"raw": "{\r\n\"hotel_id\":10\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -349,7 +349,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"hotel_id\": 2,\r\n    \"user_name\": \"John Doe\",\r\n    \"user_role\": \"manager\",\r\n    \"user_phone_number\": \"+91 98765 43210\",\r\n    \"user_password\": \"password123\"\r\n}",
+							"raw": "{\r\n    \"hotel_id\": 9,\r\n    \"user_name\": \"John Doe\",\r\n    \"user_role\": \"manager\",\r\n    \"user_phone_number\": \"+91 98765 43210\",\r\n    \"user_password\": \"password123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -357,9 +357,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/user/user.php",
+							"raw": "{{PROD}}/user/user.php",
 							"host": [
-								"{{BASE_URL}}"
+								"{{PROD}}"
 							],
 							"path": [
 								"user",
@@ -385,7 +385,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"hotel_id\": 8\r\n}",
+							"raw": "{\r\n    \"hotel_id\": 9\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -393,9 +393,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/user/user.php",
+							"raw": "{{PROD}}/user/user.php",
 							"host": [
-								"{{BASE_URL}}"
+								"{{PROD}}"
 							],
 							"path": [
 								"user",
@@ -554,7 +554,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"table_id\": 1,\r\n  \"is_split\": false,\r\n  \"order_data\": {\r\n    \"orders\": [\r\n      { \"menu_item_id\": 2, \"name\": \"Dal Tadka\", \"quantity\": 2, \"price\": 150 },\r\n      { \"menu_item_id\": 4, \"name\": \"Butter Naan\", \"quantity\": 1, \"price\": 200 }\r\n    ],\r\n    \"total_cost\": 500,\r\n    \"gst\": 18,\r\n    \"final_amount\": 590\r\n  },\r\n  \"total_cost\": 590,\r\n  \"taken_by_id\": 3,\r\n  \"taken_by_role\": \"user\"\r\n}",
+									"raw": "{\r\n  \"table_id\": 144,\r\n  \"is_split\": false,\r\n  \"order_data\": {\r\n    \"orders\": [\r\n      { \"menu_item_id\": 2, \"name\": \"Dal Tadka\", \"quantity\": 2, \"price\": 150 },\r\n      { \"menu_item_id\": 4, \"name\": \"Butter Naan\", \"quantity\": 1, \"price\": 200 }\r\n    ],\r\n    \"total_cost\": 500,\r\n    \"gst\": 18,\r\n    \"final_amount\": 590\r\n  },\r\n  \"total_cost\": 590,\r\n  \"taken_by_id\": 3,\r\n  \"taken_by_role\": \"user\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -590,7 +590,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"table_id\": 1,\r\n  \"is_split\": true,\r\n  \"split_order_data\": [\r\n    {\r\n      \"split_order_id\": 1,\r\n      \"items\": [\r\n        { \"menu_item_id\": 1, \"name\": \"Paneer Tikka\", \"quantity\": 2, \"price\": 200 }\r\n      ],\r\n      \"total_cost\": 400\r\n    },\r\n    {\r\n      \"split_order_id\": 2,\r\n      \"items\": [\r\n        { \"menu_item_id\": 3, \"name\": \"Gulab Jamun\", \"quantity\": 1, \"price\": 50 }\r\n      ],\r\n      \"total_cost\": 50\r\n    }\r\n  ],\r\n  \"total_cost\": 450,\r\n  \"taken_by_id\": 3,\r\n  \"taken_by_role\": \"user\"\r\n}\r\n",
+									"raw": "{\r\n  \"table_id\": 144,\r\n  \"is_split\": true,\r\n  \"split_order_data\": [\r\n    {\r\n      \"split_order_id\": 1,\r\n      \"items\": [\r\n        { \"menu_item_id\": 1, \"name\": \"Paneer Tikka\", \"quantity\": 2, \"price\": 200 }\r\n      ],\r\n      \"total_cost\": 400\r\n    },\r\n    {\r\n      \"split_order_id\": 2,\r\n      \"items\": [\r\n        { \"menu_item_id\": 3, \"name\": \"Gulab Jamun\", \"quantity\": 1, \"price\": 50 }\r\n      ],\r\n      \"total_cost\": 50\r\n    }\r\n  ],\r\n  \"total_cost\": 450,\r\n  \"taken_by_id\": 3,\r\n  \"taken_by_role\": \"user\"\r\n}\r\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -605,6 +605,112 @@
 									"path": [
 										"table",
 										"takeOrder.php"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "cancle_order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"table_id\": 123,\r\n  \"is_split\": 0\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/table/cancelOrder.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"table",
+								"cancelOrder.php"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "normal_order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "authorization",
+										"value": "{{Authorization}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"table_id\": 144,\r\n  \"is_split\": 0\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/table/cancelOrder.php",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"table",
+										"cancelOrder.php"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "spilt_order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "authorization",
+										"value": "{{Authorization}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"table_id\": 144,\r\n  \"is_split\": 1,\r\n  \"split_order_id\": 1\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/table/cancelOrder.php",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"table",
+										"cancelOrder.php"
 									]
 								}
 							},
@@ -660,7 +766,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"table_id\": 68\r\n}\r\n",
+									"raw": "{\r\n    \"table_id\": 68,\r\n    \"payment_status\":\"cash\"\r\n\r\n}\r\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -696,7 +802,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"table_id\": 68,\r\n    \"is_split\":true,\r\n    \"split_order_id\":2\r\n}\r\n",
+									"raw": "{\r\n    \"table_id\": 68,\r\n    \"is_split\":true,\r\n    \"split_order_id\":2,\r\n     \"payment_status\":\"cash\"\r\n}\r\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -914,7 +1020,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"hotel_id\": 8\r\n}",
+							"raw": "{\r\n    \"hotel_id\": 9\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -922,13 +1028,19 @@
 							}
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/menus/menus.php",
+							"raw": "{{BASE_URL}}/menus/menus.php?hotel_id=9",
 							"host": [
 								"{{BASE_URL}}"
 							],
 							"path": [
 								"menus",
 								"menus.php"
+							],
+							"query": [
+								{
+									"key": "hotel_id",
+									"value": "9"
+								}
 							]
 						}
 					},
@@ -995,6 +1107,189 @@
 							"path": [
 								"menus",
 								"menus.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "add_settings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\r\n     \"hotel_id\": 8,\r\n     \"gst_enabled\": 1,\r\n     \"single_bill_enabled\": 0,\r\n     \"kot_enabled\": 1,\r\n     \"bill_first_enabled\": 0,\r\n     \"always_printer_enable\": 1,\r\n     \"cgst_percentage\": 9.00,\r\n     \"sgst_percentage\": 9.00\r\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/settings/settings.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"settings",
+								"settings.php"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "add_settings",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "authorization",
+										"value": "{{Authorization}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "   {\r\n     \"hotel_id\": 8,\r\n     \"gst_enabled\": 1,\r\n     \"single_bill_enabled\": 0,\r\n     \"kot_enabled\": 1,\r\n     \"bill_first_enabled\": 0,\r\n     \"always_printer_enable\": 1,\r\n     \"cgst_percentage\": 9.00,\r\n     \"sgst_percentage\": 9.00\r\n   }\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/settings/settings.php",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"settings",
+										"settings.php"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "get_settings",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/settings/settings.php?hotel_id=14",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"settings",
+								"settings.php"
+							],
+							"query": [
+								{
+									"key": "hotel_id",
+									"value": "14"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_menu",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\r\n     \"hotel_id\": 8,\r\n     \"gst_enabled\": 0,\r\n     \"single_bill_enabled\": 0,\r\n     \"kot_enabled\": 1,\r\n     \"bill_first_enabled\": 0,\r\n     \"always_printer_enable\": 1,\r\n     \"cgst_percentage\":0.0,\r\n     \"sgst_percentage\":0.0\r\n   }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/settings/settings.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"settings",
+								"settings.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_menu",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hotel_id\": 8\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/settings/settings.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"settings",
+								"settings.php"
 							]
 						}
 					},
@@ -1179,6 +1474,39 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "add_order_history",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"table_id\": 70,\r\n  \"payment_status\": \"cash\",\r\n  \"order_data\": {\r\n    \"orders\": [\r\n      { \"menu_item_id\": 27, \"name\": \"Rice\", \"quantity\": 6, \"price\": 90.00 },\r\n      { \"menu_item_id\": 26, \"name\": \"Roti\", \"quantity\": 4, \"price\": 20.00 },\r\n      { \"menu_item_id\": 25, \"name\": \"Paneer masala\", \"quantity\": 3, \"price\": 200.00 },\r\n      { \"menu_item_id\": 24, \"name\": \"Paneer tikka\", \"quantity\": 3, \"price\": 220.00 }\r\n    ],\r\n    \"total_cost\": 1880,\r\n    \"cgst_percentage\": 0,\r\n    \"sgst_percentage\": 0,\r\n    \"final_amount\": 1880\r\n  },\r\n  \"taken_by_id\": 13,\r\n  \"taken_by_role\": \"user\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/orderHistory/orderHistory.php",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orderHistory",
+								"orderHistory.php"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
@@ -1192,6 +1520,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -1202,6 +1531,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -1214,8 +1544,12 @@
 			"value": "http://localhost:8084/Hotelwala_API_V2_PHP/"
 		},
 		{
+			"key": "PROD",
+			"value": "https://csdjrathod.com/hotelwala"
+		},
+		{
 			"key": "Authorization",
-			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NTkyNjgzMywiZXhwIjo1MzU1OTI2ODMzfQ.ctWQsAvrPfjEkwukAtww_LNKQuEonoKk9H0Sh5jNy_0"
+			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lcl9pZCI6OSwib3duZXJfbmFtZSI6IlNLIiwib3duZXJfZW1haWwiOiJza0BnbWFpbC5jb20iLCJ1c2VyX3R5cGUiOiJvd25lciIsImlhdCI6MTc1NzQyNzM3NywiZXhwIjoxNzU3NDMwOTc3fQ.nEO1nCxsd9gbCIyNx6ZBt68IHgxg75u7pYd0_Rph2RQ"
 		}
 	]
 }

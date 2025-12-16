@@ -5,8 +5,6 @@ DELETE FROM categories;
 DELETE FROM expenses;
 DELETE FROM expense_types;
 DELETE FROM hotels;
-DELETE FROM expencetype;
-DELETE FROM hotels;
 DELETE FROM menus;
 DELETE FROM orderhistory;
 DELETE FROM owners;

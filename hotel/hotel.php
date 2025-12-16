@@ -91,11 +91,11 @@ function createHotel($conn, $userID, $userType)
                         VALUES (:hotel_id, :gst_enabled, :single_bill_enabled, :kot_enabled, :bill_first_enabled, :always_printer_enable, :cgst_percentage, :sgst_percentage, NOW(), NOW())";
         $sstmt = $conn->prepare($insSettings);
         $sstmt->bindValue(':hotel_id', $hotelId, PDO::PARAM_INT);
-        $sstmt->bindValue(':gst_enabled', 1, PDO::PARAM_INT);
+        $sstmt->bindValue(':gst_enabled', 0, PDO::PARAM_INT);
         $sstmt->bindValue(':single_bill_enabled', 0, PDO::PARAM_INT);
-        $sstmt->bindValue(':kot_enabled', 1, PDO::PARAM_INT);
-        $sstmt->bindValue(':bill_first_enabled', 1, PDO::PARAM_INT);
-        $sstmt->bindValue(':always_printer_enable', 1, PDO::PARAM_INT);
+        $sstmt->bindValue(':kot_enabled', 0, PDO::PARAM_INT);
+        $sstmt->bindValue(':bill_first_enabled', 0, PDO::PARAM_INT);
+        $sstmt->bindValue(':always_printer_enable', 0, PDO::PARAM_INT);
         $sstmt->bindValue(':cgst_percentage', 0.00);
         $sstmt->bindValue(':sgst_percentage', 0.00);
         $sstmt->execute();

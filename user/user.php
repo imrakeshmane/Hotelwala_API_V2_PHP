@@ -66,6 +66,7 @@ function createUser($conn, $userID, $userType) {
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
+    
 
     if (!isset($data['hotel_id'], $data['user_name'], $data['user_role'], $data['user_phone_number'], $data['user_password'])) {
         http_response_code(400); // Bad Request

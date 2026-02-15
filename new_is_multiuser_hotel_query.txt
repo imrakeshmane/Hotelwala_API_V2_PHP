@@ -1,0 +1,6 @@
+-- add is_multi_user to hotels (default 0)
+ALTER TABLE hotels
+  ADD COLUMN is_multi_user TINYINT(1) NOT NULL DEFAULT 0 AFTER updated_at;
+
+-- optional: index for fast counting
+CREATE INDEX idx_users_hotel_active ON users (hotel_id, is_active);
